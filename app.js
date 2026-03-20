@@ -49,6 +49,7 @@ let camerasCache = [];
 let map = null;
 let markersLayer = null;
 let mapInitialized = false;
+let unsubscribeCameras = null;
 
 function setAuthStatus(message, isError = false) {
   authStatus.textContent = message;
@@ -102,7 +103,15 @@ tabButtons.forEach((btn) => {
 
 async function login() {
   try {
-    await signInWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      setAuthStatus("Debes ingresar correo y contraseña.", true);
+      return;
+    }
+
+    await signInWithEmailAndPassword(auth, email, password);
     setAuthStatus("Sesión iniciada correctamente.");
   } catch (error) {
     console.error(error);
@@ -115,6 +124,16 @@ async function logout() {
     await signOut(auth);
     currentUserProfile = null;
     userInfo.textContent = "Sin sesión";
+
+    if (unsubscribeCameras) {
+      unsubscribeCameras();
+      unsubscribeCameras = null;
+    }
+
+    camerasCache = [];
+    renderRecordsList();
+    renderMapMarkers();
+
     setAuthStatus("Sesión cerrada.");
   } catch (error) {
     console.error(error);
@@ -132,6 +151,7 @@ async function loadUserProfile(uid) {
   if (!snap.exists()) {
     currentUserProfile = null;
     userInfo.textContent = "Usuario sin perfil";
+    setAuthStatus("Tu usuario existe, pero no tiene perfil en Firestore.", true);
     return;
   }
 
@@ -147,6 +167,12 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   await loadUserProfile(user.uid);
+
+  if (currentUserProfile?.activo !== true) {
+    setAuthStatus("Tu usuario está inactivo.", true);
+    return;
+  }
+
   subscribeToCameras();
 });
 
@@ -176,7 +202,12 @@ async function registerCamera(type) {
       return;
     }
 
-    setStatus(`Registrando cámara tipo ${type}...`);
+    if (currentUserProfile.activo !== true) {
+      setStatus("Tu usuario no está activo.", true);
+      return;
+    }
+
+    setStatus(`Registrando cámara tipo: ${type}...`);
 
     const position = await getCurrentPosition();
     const lat = position.coords.latitude;
@@ -196,12 +227,14 @@ async function registerCamera(type) {
       validado: false
     });
 
-    if (navigator.vibrate) navigator.vibrate(100);
+    if (navigator.vibrate) {
+      navigator.vibrate(100);
+    }
 
     observacionInput.value = "";
     direccionRefInput.value = "";
 
-    setStatus(`✅ Cámara registrada: ${type}`);
+    setStatus(`✅ Cámara registrada: ${type} (${lat.toFixed(6)}, ${lng.toFixed(6)})`);
   } catch (error) {
     console.error(error);
     setStatus("No fue posible guardar el registro.", true);
@@ -219,6 +252,7 @@ function renderRecordsList() {
   }
 
   recordsList.innerHTML = camerasCache
+    .filter((record) => record.estado === "activo")
     .map(
       (record) => `
         <div class="record-item">
@@ -255,13 +289,12 @@ function renderMapMarkers() {
 
   markersLayer.clearLayers();
 
-  if (camerasCache.length === 0) return;
+  const activeRecords = camerasCache.filter((record) => record.estado === "activo");
+  if (activeRecords.length === 0) return;
 
   const bounds = [];
 
-  camerasCache.forEach((record) => {
-    if (record.estado !== "activo") return;
-
+  activeRecords.forEach((record) => {
     const marker = L.marker([record.lat, record.lng]).bindPopup(`
       <strong>${getEmoji(record.type)} ${record.type}</strong><br>
       Usuario: ${record.usuarioNombre || "-"}<br>
@@ -279,22 +312,27 @@ function renderMapMarkers() {
   }
 }
 
-let unsubscribeCameras = null;
-
 function subscribeToCameras() {
   if (unsubscribeCameras) unsubscribeCameras();
 
   const q = query(collection(db, "camaras"), orderBy("createdAt", "desc"));
 
-  unsubscribeCameras = onSnapshot(q, (snapshot) => {
-    camerasCache = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data()
-    }));
+  unsubscribeCameras = onSnapshot(
+    q,
+    (snapshot) => {
+      camerasCache = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
 
-    renderRecordsList();
-    renderMapMarkers();
-  });
+      renderRecordsList();
+      renderMapMarkers();
+    },
+    (error) => {
+      console.error(error);
+      setStatus("No fue posible sincronizar cámaras.", true);
+    }
+  );
 }
 
 async function showMyLocation() {
@@ -340,3 +378,11 @@ btnUbicacion.addEventListener("click", showMyLocation);
 btnLimpiarCampos.addEventListener("click", clearFields);
 btnCentrarMapa.addEventListener("click", centerMapOnLocation);
 btnActualizarMapa.addEventListener("click", renderMapMarkers);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .catch((error) => console.error("SW error:", error));
+  });
+}
