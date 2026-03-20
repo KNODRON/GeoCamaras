@@ -1,8 +1,38 @@
-const STORAGE_KEY = "geocamaras_registros_v1";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+import { firebaseConfig } from "./firebase-config.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 const tabButtons = document.querySelectorAll(".tab-btn");
 const tabPanels = document.querySelectorAll(".tab-panel");
 const typeButtons = document.querySelectorAll(".type-btn");
+
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const btnLogin = document.getElementById("btnLogin");
+const btnLogout = document.getElementById("btnLogout");
+const authStatus = document.getElementById("authStatus");
+const userInfo = document.getElementById("userInfo");
 
 const observacionInput = document.getElementById("observacion");
 const direccionRefInput = document.getElementById("direccionRef");
@@ -13,35 +43,27 @@ const btnUbicacion = document.getElementById("btnUbicacion");
 const btnLimpiarCampos = document.getElementById("btnLimpiarCampos");
 const btnCentrarMapa = document.getElementById("btnCentrarMapa");
 const btnActualizarMapa = document.getElementById("btnActualizarMapa");
-const btnExportar = document.getElementById("btnExportar");
-const btnBorrarTodo = document.getElementById("btnBorrarTodo");
 
+let currentUserProfile = null;
+let camerasCache = [];
 let map = null;
 let markersLayer = null;
 let mapInitialized = false;
 
-function getRecords() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch (error) {
-    console.error("Error leyendo registros:", error);
-    return [];
-  }
-}
-
-function saveRecords(records) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+function setAuthStatus(message, isError = false) {
+  authStatus.textContent = message;
+  authStatus.style.color = isError ? "#b91c1c" : "#374151";
 }
 
 function setStatus(message, isError = false) {
   statusBox.textContent = message;
   statusBox.style.color = isError ? "#b91c1c" : "#374151";
-  statusBox.style.borderColor = isError ? "#fecaca" : "#e5e7eb";
-  statusBox.style.background = isError ? "#fef2f2" : "#f9fafb";
 }
 
-function formatDate(dateString) {
-  return new Date(dateString).toLocaleString("es-CL");
+function formatDate(value) {
+  if (!value) return "-";
+  const date = value?.toDate ? value.toDate() : new Date(value);
+  return date.toLocaleString("es-CL");
 }
 
 function getEmoji(type) {
@@ -72,11 +94,61 @@ function switchTab(tabName) {
       renderMapMarkers();
     }, 150);
   }
+}
 
-  if (tabName === "registros") {
-    renderRecordsList();
+tabButtons.forEach((btn) => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+async function login() {
+  try {
+    await signInWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
+    setAuthStatus("Sesión iniciada correctamente.");
+  } catch (error) {
+    console.error(error);
+    setAuthStatus("No fue posible iniciar sesión.", true);
   }
 }
+
+async function logout() {
+  try {
+    await signOut(auth);
+    currentUserProfile = null;
+    userInfo.textContent = "Sin sesión";
+    setAuthStatus("Sesión cerrada.");
+  } catch (error) {
+    console.error(error);
+    setAuthStatus("No fue posible cerrar sesión.", true);
+  }
+}
+
+btnLogin.addEventListener("click", login);
+btnLogout.addEventListener("click", logout);
+
+async function loadUserProfile(uid) {
+  const userRef = doc(db, "usuarios", uid);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) {
+    currentUserProfile = null;
+    userInfo.textContent = "Usuario sin perfil";
+    return;
+  }
+
+  currentUserProfile = { uid, ...snap.data() };
+  userInfo.textContent = `${currentUserProfile.nombre} · ${currentUserProfile.rol}`;
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    currentUserProfile = null;
+    userInfo.textContent = "Sin sesión";
+    return;
+  }
+
+  await loadUserProfile(user.uid);
+  subscribeToCameras();
+});
 
 function getCurrentPosition() {
   return new Promise((resolve, reject) => {
@@ -99,70 +171,65 @@ function getCurrentPosition() {
 
 async function registerCamera(type) {
   try {
-    setStatus(`Obteniendo ubicación para registrar: ${type}...`);
+    if (!auth.currentUser || !currentUserProfile) {
+      setStatus("Debes iniciar sesión primero.", true);
+      return;
+    }
+
+    setStatus(`Registrando cámara tipo ${type}...`);
 
     const position = await getCurrentPosition();
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
 
-    const observacion = observacionInput.value.trim();
-    const referencia = direccionRefInput.value.trim();
-
-    const record = {
-      id: Date.now(),
+    await addDoc(collection(db, "camaras"), {
       type,
       lat,
       lng,
-      observacion,
-      referencia,
-      createdAt: new Date().toISOString()
-    };
+      observacion: observacionInput.value.trim(),
+      referencia: direccionRefInput.value.trim(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      usuarioUid: auth.currentUser.uid,
+      usuarioNombre: currentUserProfile.nombre,
+      estado: "activo",
+      validado: false
+    });
 
-    const records = getRecords();
-    records.push(record);
-    saveRecords(records);
+    if (navigator.vibrate) navigator.vibrate(100);
 
-    setStatus(
-      `Registro guardado: ${type} (${lat.toFixed(6)}, ${lng.toFixed(6)})`
-    );
+    observacionInput.value = "";
+    direccionRefInput.value = "";
 
-    renderRecordsList();
-
-    if (mapInitialized) {
-      renderMapMarkers();
-    }
+    setStatus(`✅ Cámara registrada: ${type}`);
   } catch (error) {
     console.error(error);
-
-    let message = "No se pudo obtener la ubicación.";
-    if (error.code === 1) message = "Permiso de ubicación denegado.";
-    if (error.code === 2) message = "Ubicación no disponible.";
-    if (error.code === 3) message = "Tiempo de espera agotado.";
-
-    setStatus(message, true);
+    setStatus("No fue posible guardar el registro.", true);
   }
 }
 
-function renderRecordsList() {
-  const records = getRecords().slice().reverse();
+typeButtons.forEach((btn) => {
+  btn.addEventListener("click", () => registerCamera(btn.dataset.type));
+});
 
-  if (records.length === 0) {
-    recordsList.innerHTML = `
-      <div class="empty-box">Aún no hay registros guardados.</div>
-    `;
+function renderRecordsList() {
+  if (camerasCache.length === 0) {
+    recordsList.innerHTML = `<div class="empty-box">Aún no hay registros.</div>`;
     return;
   }
 
-  recordsList.innerHTML = records
+  recordsList.innerHTML = camerasCache
     .map(
       (record) => `
         <div class="record-item">
           <div class="record-title">${getEmoji(record.type)} ${record.type}</div>
           <small><strong>Fecha:</strong> ${formatDate(record.createdAt)}</small>
-          <small><strong>Lat:</strong> ${record.lat.toFixed(6)}</small>
-          <small><strong>Lng:</strong> ${record.lng.toFixed(6)}</small>
+          <small><strong>Usuario:</strong> ${record.usuarioNombre || "-"}</small>
+          <small><strong>Lat:</strong> ${record.lat?.toFixed(6)}</small>
+          <small><strong>Lng:</strong> ${record.lng?.toFixed(6)}</small>
           <small><strong>Referencia:</strong> ${record.referencia || "-"}</small>
           <small><strong>Observación:</strong> ${record.observacion || "-"}</small>
+          <small><strong>Estado:</strong> ${record.estado || "-"}</small>
         </div>
       `
     )
@@ -181,30 +248,28 @@ function initMap() {
 
   markersLayer = L.layerGroup().addTo(map);
   mapInitialized = true;
-  renderMapMarkers();
 }
 
 function renderMapMarkers() {
   if (!mapInitialized) return;
 
   markersLayer.clearLayers();
-  const records = getRecords();
 
-  if (records.length === 0) return;
+  if (camerasCache.length === 0) return;
 
   const bounds = [];
 
-  records.forEach((record) => {
-    const popupHtml = `
+  camerasCache.forEach((record) => {
+    if (record.estado !== "activo") return;
+
+    const marker = L.marker([record.lat, record.lng]).bindPopup(`
       <strong>${getEmoji(record.type)} ${record.type}</strong><br>
+      Usuario: ${record.usuarioNombre || "-"}<br>
       Fecha: ${formatDate(record.createdAt)}<br>
       Referencia: ${record.referencia || "-"}<br>
-      Observación: ${record.observacion || "-"}<br>
-      Lat: ${record.lat.toFixed(6)}<br>
-      Lng: ${record.lng.toFixed(6)}
-    `;
+      Observación: ${record.observacion || "-"}
+    `);
 
-    const marker = L.marker([record.lat, record.lng]).bindPopup(popupHtml);
     marker.addTo(markersLayer);
     bounds.push([record.lat, record.lng]);
   });
@@ -214,9 +279,26 @@ function renderMapMarkers() {
   }
 }
 
+let unsubscribeCameras = null;
+
+function subscribeToCameras() {
+  if (unsubscribeCameras) unsubscribeCameras();
+
+  const q = query(collection(db, "camaras"), orderBy("createdAt", "desc"));
+
+  unsubscribeCameras = onSnapshot(q, (snapshot) => {
+    camerasCache = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+
+    renderRecordsList();
+    renderMapMarkers();
+  });
+}
+
 async function showMyLocation() {
   try {
-    setStatus("Buscando ubicación...");
     const position = await getCurrentPosition();
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
@@ -225,10 +307,7 @@ async function showMyLocation() {
 
     if (mapInitialized) {
       map.setView([lat, lng], 18);
-      L.popup()
-        .setLatLng([lat, lng])
-        .setContent("📍 Estás aquí")
-        .openOn(map);
+      L.popup().setLatLng([lat, lng]).setContent("📍 Estás aquí").openOn(map);
     }
   } catch (error) {
     console.error(error);
@@ -244,14 +323,10 @@ async function centerMapOnLocation() {
 
     initMap();
     map.setView([lat, lng], 18);
-
-    L.popup()
-      .setLatLng([lat, lng])
-      .setContent("📍 Ubicación actual")
-      .openOn(map);
+    L.popup().setLatLng([lat, lng]).setContent("📍 Ubicación actual").openOn(map);
   } catch (error) {
     console.error(error);
-    alert("No fue posible centrar el mapa en tu ubicación.");
+    alert("No fue posible centrar el mapa.");
   }
 }
 
@@ -261,59 +336,7 @@ function clearFields() {
   setStatus("Campos limpiados.");
 }
 
-function exportJSON() {
-  const records = getRecords();
-
-  if (records.length === 0) {
-    alert("No hay registros para exportar.");
-    return;
-  }
-
-  const blob = new Blob([JSON.stringify(records, null, 2)], {
-    type: "application/json"
-  });
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "geocamaras_registros.json";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function deleteAllRecords() {
-  const confirmed = confirm("¿Seguro que deseas borrar todos los registros?");
-  if (!confirmed) return;
-
-  localStorage.removeItem(STORAGE_KEY);
-  renderRecordsList();
-  if (mapInitialized) renderMapMarkers();
-  setStatus("Todos los registros fueron eliminados.");
-}
-
-tabButtons.forEach((btn) => {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-});
-
-typeButtons.forEach((btn) => {
-  btn.addEventListener("click", () => registerCamera(btn.dataset.type));
-});
-
 btnUbicacion.addEventListener("click", showMyLocation);
 btnLimpiarCampos.addEventListener("click", clearFields);
 btnCentrarMapa.addEventListener("click", centerMapOnLocation);
 btnActualizarMapa.addEventListener("click", renderMapMarkers);
-btnExportar.addEventListener("click", exportJSON);
-btnBorrarTodo.addEventListener("click", deleteAllRecords);
-
-renderRecordsList();
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("./service-worker.js")
-      .catch((error) => console.error("SW error:", error));
-  });
-}
