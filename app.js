@@ -1,210 +1,206 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// ================================
+// GEOREGISTRO - BASE UI FUNCIONAL
+// ================================
 
-/* =========================
-   FIREBASE CONFIG
-========================= */
-const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-/* =========================
-   ELEMENTOS
-========================= */
+// --------- ELEMENTOS ---------
 const loginView = document.getElementById("login-view");
 const appView = document.getElementById("app-view");
-const operadorPanel = document.getElementById("operador-panel");
-const adminPanel = document.getElementById("admin-panel");
-const roleBadge = document.getElementById("user-role-badge");
 
 const loginForm = document.getElementById("loginForm");
-const loginEmail = document.getElementById("loginEmail");
-const loginPassword = document.getElementById("loginPassword");
-const loginMessage = document.getElementById("loginMessage");
 const logoutBtn = document.getElementById("logoutBtn");
 
-const categoriasGrid = document.getElementById("categoriasGrid");
+const operadorPanel = document.getElementById("operador-panel");
+const adminPanel = document.getElementById("admin-panel");
+
+const roleBadge = document.getElementById("roleBadge");
+const userName = document.getElementById("userName");
+
+const categoryButtons = document.querySelectorAll(".card-btn");
 const categoriaSeleccionada = document.getElementById("categoriaSeleccionada");
-const descripcion = document.getElementById("descripcion");
-const latitud = document.getElementById("latitud");
-const longitud = document.getElementById("longitud");
-const direccion = document.getElementById("direccion");
-const btnGPS = document.getElementById("btnGPS");
-const registroForm = document.getElementById("registroForm");
-const registroMessage = document.getElementById("registroMessage");
+const incidenciaForm = document.getElementById("incidenciaForm");
+const btnUbicacion = document.getElementById("btnUbicacion");
+const latitudInput = document.getElementById("latitud");
+const longitudInput = document.getElementById("longitud");
 
 const filtroCategoria = document.getElementById("filtroCategoria");
 const filtroEstado = document.getElementById("filtroEstado");
 const filtroTexto = document.getElementById("filtroTexto");
-const btnAplicarFiltros = document.getElementById("btnAplicarFiltros");
+const btnFiltrar = document.getElementById("btnFiltrar");
 const btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
 const btnExportarCSV = document.getElementById("btnExportarCSV");
-const adminTableBody = document.getElementById("admin-table-body");
+const adminTableBody = document.getElementById("adminTableBody");
 
-const cardTotal = document.getElementById("card-total");
-const cardHoy = document.getElementById("card-hoy");
-const cardPendientes = document.getElementById("card-pendientes");
-const cardResueltas = document.getElementById("card-resueltas");
+const statTotal = document.getElementById("statTotal");
+const statHoy = document.getElementById("statHoy");
+const statPendientes = document.getElementById("statPendientes");
+const statResueltas = document.getElementById("statResueltas");
 
-/* =========================
-   ESTADO
-========================= */
-let currentUserData = null;
-let operadorMap = null;
-let adminMap = null;
+// --------- MAPAS ---------
+let operadorMap;
+let adminMap;
 let operadorMarker = null;
-let adminMarkersLayer = null;
-let allIncidencias = [];
+let adminMarkers = [];
 
-/* =========================
-   LOGIN
-========================= */
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  loginMessage.textContent = "Ingresando...";
+// --------- SESIÓN SIMULADA ---------
+// Cambia esto por Firebase Auth + Firestore después
+let currentUser = null;
 
-  try {
-    await signInWithEmailAndPassword(auth, loginEmail.value, loginPassword.value);
-    loginMessage.textContent = "";
-  } catch (error) {
-    console.error(error);
-    loginMessage.textContent = "No se pudo iniciar sesión.";
+// --------- DATA SIMULADA ---------
+let incidencias = [
+  {
+    id: "1",
+    categoria: "Alumbrado",
+    descripcion: "Luminaria apagada frente a plaza",
+    direccion: "Av. Central 123",
+    lat: -33.4942,
+    lng: -70.7081,
+    estado: "pendiente",
+    fecha: new Date(),
+    nombreUsuario: "Operador 1"
+  },
+  {
+    id: "2",
+    categoria: "Basura",
+    descripcion: "Microbasural en esquina",
+    direccion: "Pasaje Los Robles 455",
+    lat: -33.4971,
+    lng: -70.7045,
+    estado: "en_proceso",
+    fecha: new Date(Date.now() - 86400000),
+    nombreUsuario: "Operador 2"
+  },
+  {
+    id: "3",
+    categoria: "Seguridad",
+    descripcion: "Poste dañado con riesgo",
+    direccion: "Calle Sur 889",
+    lat: -33.492,
+    lng: -70.7015,
+    estado: "resuelto",
+    fecha: new Date(),
+    nombreUsuario: "Operador 1"
   }
+];
+
+// --------- INICIO ---------
+document.addEventListener("DOMContentLoaded", () => {
+  initMaps();
+  initCategoryButtons();
+  initEvents();
 });
 
-logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
-});
+// --------- EVENTOS ---------
+function initEvents() {
+  loginForm.addEventListener("submit", handleLogin);
+  logoutBtn.addEventListener("click", handleLogout);
+  btnUbicacion.addEventListener("click", obtenerUbicacion);
+  incidenciaForm.addEventListener("submit", registrarIncidencia);
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    loginView.classList.remove("hidden");
-    appView.classList.add("hidden");
-    operadorPanel.classList.add("hidden");
-    adminPanel.classList.add("hidden");
-    currentUserData = null;
+  btnFiltrar.addEventListener("click", aplicarFiltrosAdmin);
+  btnLimpiarFiltros.addEventListener("click", limpiarFiltrosAdmin);
+  btnExportarCSV.addEventListener("click", () => exportarCSV(incidencias));
+}
+
+// --------- LOGIN SIMULADO ---------
+// admin@geo.cl = admin
+// operador@geo.cl = operador
+function handleLogin(e) {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const password = document.getElementById("password").value.trim();
+
+  if (!email || !password) {
+    alert("Complete correo y contraseña.");
     return;
   }
 
-  try {
-    const userRef = doc(db, "usuarios", user.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      alert("No existe perfil para este usuario.");
-      await signOut(auth);
-      return;
-    }
-
-    const userData = userSnap.data();
-
-    if (!userData.activo) {
-      alert("Usuario desactivado.");
-      await signOut(auth);
-      return;
-    }
-
-    currentUserData = {
-      uid: user.uid,
-      ...userData
+  if (email === "admin@geo.cl") {
+    currentUser = {
+      uid: "admin001",
+      nombre: "Administrador",
+      email,
+      rol: "admin"
     };
-
-    loginView.classList.add("hidden");
-    appView.classList.remove("hidden");
-
-    renderVistaPorRol(currentUserData);
-  } catch (error) {
-    console.error("Error al cargar perfil:", error);
-    alert("No se pudo cargar el perfil del usuario.");
+  } else {
+    currentUser = {
+      uid: "op001",
+      nombre: "Operador",
+      email,
+      rol: "operador"
+    };
   }
-});
 
-/* =========================
-   ROLES
-========================= */
-function renderVistaPorRol(userData) {
+  renderAppByRole();
+}
+
+function handleLogout() {
+  currentUser = null;
+  loginView.classList.remove("hidden");
+  appView.classList.add("hidden");
+  operadorPanel.classList.add("hidden");
+  adminPanel.classList.add("hidden");
+  loginForm.reset();
+}
+
+// --------- RENDER POR ROL ---------
+function renderAppByRole() {
+  if (!currentUser) return;
+
+  loginView.classList.add("hidden");
+  appView.classList.remove("hidden");
+
+  userName.textContent = currentUser.nombre;
+  roleBadge.textContent = currentUser.rol === "admin" ? "Administrador" : "Operador";
+
   operadorPanel.classList.add("hidden");
   adminPanel.classList.add("hidden");
 
-  roleBadge.textContent = `${userData.nombre || "Usuario"} · ${userData.rol}`;
-
-  if (userData.rol === "admin") {
+  if (currentUser.rol === "admin") {
     adminPanel.classList.remove("hidden");
-    initAdminPanel();
+    setTimeout(() => {
+      adminMap.invalidateSize();
+      renderAdmin();
+    }, 120);
   } else {
     operadorPanel.classList.remove("hidden");
-    initOperadorPanel();
+    setTimeout(() => {
+      operadorMap.invalidateSize();
+    }, 120);
   }
 }
 
-/* =========================
-   OPERADOR
-========================= */
-function initOperadorPanel() {
-  setTimeout(() => {
-    initOperadorMap();
-  }, 50);
+// --------- CATEGORÍAS ---------
+function initCategoryButtons() {
+  categoryButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      categoryButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      categoriaSeleccionada.value = btn.dataset.categoria;
+    });
+  });
 }
 
-function initOperadorMap() {
-  if (operadorMap) return;
+// --------- MAPAS ---------
+function initMaps() {
+  const center = [-33.4945, -70.706];
 
-  operadorMap = L.map("map-operador").setView([-33.45, -70.67], 13);
-
+  operadorMap = L.map("operadorMap").setView(center, 14);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
     attribution: "&copy; OpenStreetMap"
   }).addTo(operadorMap);
 
-  setTimeout(() => operadorMap.invalidateSize(), 200);
+  adminMap = L.map("adminMap").setView(center, 14);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(adminMap);
+
+  renderAdminMarkers(incidencias);
 }
 
-/* =========================
-   CATEGORÍAS
-========================= */
-categoriasGrid?.addEventListener("click", (e) => {
-  const btn = e.target.closest(".card-btn");
-  if (!btn) return;
-
-  document.querySelectorAll(".card-btn").forEach(el => el.classList.remove("active"));
-  btn.classList.add("active");
-
-  categoriaSeleccionada.value = btn.dataset.categoria || "";
-});
-
-/* =========================
-   GPS
-========================= */
-btnGPS?.addEventListener("click", () => {
-  registroMessage.textContent = "Obteniendo ubicación...";
-
+function obtenerUbicacion() {
   if (!navigator.geolocation) {
-    registroMessage.textContent = "Tu navegador no soporta geolocalización.";
+    alert("Tu navegador no soporta geolocalización.");
     return;
   }
 
@@ -213,7 +209,16 @@ btnGPS?.addEventListener("click", () => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
 
-      latitud.value = lat.toFixed(6);
-      longitud.value = lng.toFixed(6);
+      latitudInput.value = lat.toFixed(6);
+      longitudInput.value = lng.toFixed(6);
 
-      registroMessage.textContent = "Ub
+      if (operadorMarker) {
+        operadorMap.removeLayer(operadorMarker);
+      }
+
+      operadorMarker = L.marker([lat, lng]).addTo(operadorMap);
+      operadorMap.setView([lat, lng], 17);
+      operadorMarker.bindPopup("Ubicación actual").openPopup();
+    },
+    (error) => {
+     
