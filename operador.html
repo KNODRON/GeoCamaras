@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoRegistro | Operador</title>
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-mini">GR</div>
+      <div>
+        <h1>GeoRegistro</h1>
+        <p>Panel Operador</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <span id="userName" class="user-badge">Usuario</span>
+      <button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="layout-operador">
+    <section class="panel-card">
+      <h2>Categorías</h2>
+      <div class="grid-categorias">
+        <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
+        <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
+        <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
+        <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
+        <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
+        <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
+      </div>
+    </section>
+
+    <section class="panel-card">
+      <h2>Registrar incidencia</h2>
+
+      <form id="registroForm" class="registro-form">
+        <div class="form-group">
+          <label for="categoria">Categoría</label>
+          <input type="text" id="categoria" readonly placeholder="Seleccione una categoría" required />
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea id="descripcion" rows="4" placeholder="Detalle de la incidencia..." required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="latitud">Latitud</label>
+            <input type="text" id="latitud" readonly />
+          </div>
+
+          <div class="form-group">
+            <label for="longitud">Longitud</label>
+            <input type="text" id="longitud" readonly />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="direccion">Dirección / referencia</label>
+          <input type="text" id="direccion" placeholder="Ej: Av. Principal con Pasaje 4" />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="btnUbicacion" class="btn-secondary">Obtener ubicación</button>
+          <button type="submit" class="btn-primary">Guardar registro</button>
+        </div>
+
+        <p id="registroMessage" class="form-message"></p>
+      </form>
+    </section>
+
+    <section class="panel-card panel-map">
+      <h2>Mapa</h2>
+      <div id="mapOperador"></div>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+  <script type="module" src="./js/operador.js"></script>
+</body>
+</html>
