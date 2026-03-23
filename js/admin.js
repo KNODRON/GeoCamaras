@@ -161,8 +161,27 @@ function renderStats(items) {
 }
 
 function aplicarColorEstado(select) {
-  select.classList.remove("pendiente", "en_proceso", "resuelto");
-  select.classList.add(select.value);
+  const estado = select.value;
+
+  // Limpieza de estilos previos
+  select.style.backgroundColor = "";
+  select.style.color = "";
+  select.style.borderColor = "";
+  select.style.fontWeight = "700";
+
+  if (estado === "pendiente") {
+    select.style.backgroundColor = "#ffe5e5";
+    select.style.color = "#b30000";
+    select.style.borderColor = "#ef9a9a";
+  } else if (estado === "en_proceso") {
+    select.style.backgroundColor = "#fff4e5";
+    select.style.color = "#b36b00";
+    select.style.borderColor = "#f2c078";
+  } else if (estado === "resuelto") {
+    select.style.backgroundColor = "#e6ffed";
+    select.style.color = "#006b2e";
+    select.style.borderColor = "#86d7a0";
+  }
 }
 
 function coordenadasValidas(item) {
