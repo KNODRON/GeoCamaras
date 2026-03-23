@@ -10,6 +10,10 @@
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     crossorigin=""
   />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css"
+  />
 </head>
 <body>
   <header class="topbar">
@@ -23,6 +27,7 @@
 
     <div class="topbar-right">
       <span id="adminName" class="user-badge">Administrador</span>
+      <button id="changePasswordBtn" class="btn-secondary">Cambiar contraseña</button>
       <button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
     </div>
   </header>
@@ -106,6 +111,7 @@
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     crossorigin=""
   ></script>
+  <script src="https://unpkg.com/leaflet-gesture-handling"></script>
   <script type="module" src="./js/admin.js"></script>
 </body>
 </html>
