@@ -5,7 +5,7 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 export function requireRole(expectedRole, onSuccess) {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      window.location.href = "./login.html";
+      window.location.href = "./index.html";
       return;
     }
 
@@ -15,7 +15,7 @@ export function requireRole(expectedRole, onSuccess) {
 
       if (!snap.exists()) {
         await signOut(auth);
-        window.location.href = "./login.html";
+        window.location.href = "./index.html";
         return;
       }
 
@@ -23,7 +23,7 @@ export function requireRole(expectedRole, onSuccess) {
 
       if (!profile.activo) {
         await signOut(auth);
-        window.location.href = "./login.html";
+        window.location.href = "./index.html";
         return;
       }
 
@@ -34,14 +34,14 @@ export function requireRole(expectedRole, onSuccess) {
 
       if (expectedRole === "operador" && !["operador", "admin"].includes(profile.rol)) {
         await signOut(auth);
-        window.location.href = "./login.html";
+        window.location.href = "./index.html";
         return;
       }
 
       onSuccess(user, profile);
     } catch (error) {
       console.error("Error validando rol:", error);
-      window.location.href = "./login.html";
+      window.location.href = "./index.html";
     }
   });
 }
