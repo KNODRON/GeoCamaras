@@ -440,24 +440,6 @@ body {
   -moz-appearance: none;
 }
 
-.estado-select.pendiente {
-  background: #ffe5e5 !important;
-  color: #b30000 !important;
-  border-color: #ef9a9a !important;
-}
-
-.estado-select.en_proceso {
-  background: #fff4e5 !important;
-  color: #b36b00 !important;
-  border-color: #f2c078 !important;
-}
-
-.estado-select.resuelto {
-  background: #e6ffed !important;
-  color: #006b2e !important;
-  border-color: #86d7a0 !important;
-}
-
 .btn-ver-mapa {
   padding: 6px 10px;
   border-radius: 8px;
