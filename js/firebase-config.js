@@ -3,12 +3,12 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyBinfL_PpNgWpHZ6cVA25LAkdaE9hDgoAI",
+  authDomain: "geocamara-913d6.firebaseapp.com",
+  projectId: "geocamara-913d6",
+  storageBucket: "geocamara-913d6.firebasestorage.app",
+  messagingSenderId: "805498931282",
+  appId: "G-WM6LV8TCJ2"
 };
 
 const app = initializeApp(firebaseConfig);
