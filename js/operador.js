@@ -1,4 +1,4 @@
-import { auth, db } from "./firebase-config.js";
+import { auth, db, storage } from "./firebase-config.js";
 import { requireRole } from "./guards.js";
 import {
   signOut,
@@ -7,8 +7,15 @@ import {
 import {
   collection,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const logoutBtn = document.getElementById("logoutBtn");
 const changePasswordBtn = document.getElementById("changePasswordBtn");
@@ -19,6 +26,8 @@ const descripcionInput = document.getElementById("descripcion");
 const latitudInput = document.getElementById("latitud");
 const longitudInput = document.getElementById("longitud");
 const direccionInput = document.getElementById("direccion");
+const fotosInput = document.getElementById("fotos");
+const previewFotos = document.getElementById("previewFotos");
 const btnUbicacion = document.getElementById("btnUbicacion");
 const registroForm = document.getElementById("registroForm");
 const registroMessage = document.getElementById("registroMessage");
@@ -35,6 +44,7 @@ requireRole("operador", async (user, profile) => {
   userName.textContent = `${profile.nombre || user.email} · ${profile.rol}`;
   initMap();
   bindCategoriaButtons();
+  bindPreviewFotos();
 });
 
 logoutBtn.addEventListener("click", async () => {
@@ -68,7 +78,6 @@ function initMap() {
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
 
-  // Zoom con Ctrl + rueda en PC
   map.getContainer().addEventListener(
     "wheel",
     (e) => {
@@ -103,6 +112,31 @@ function bindCategoriaButtons() {
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       categoriaInput.value = btn.dataset.categoria;
+    });
+  });
+}
+
+function bindPreviewFotos() {
+  fotosInput.addEventListener("change", () => {
+    previewFotos.innerHTML = "";
+
+    const files = Array.from(fotosInput.files || []);
+    if (!files.length) return;
+
+    files.forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const item = document.createElement("div");
+        item.className = "preview-item";
+        item.innerHTML = `
+          <img src="${e.target.result}" alt="Vista previa" />
+          <span>${file.name}</span>
+        `;
+        previewFotos.appendChild(item);
+      };
+      reader.readAsDataURL(file);
     });
   });
 }
@@ -157,6 +191,7 @@ registroForm.addEventListener("submit", async (e) => {
   const categoria = categoriaInput.value.trim();
   const descripcion = descripcionInput.value.trim();
   const direccion = direccionInput.value.trim();
+  const files = Array.from(fotosInput.files || []);
 
   const lat = parseFloat(String(latitudInput.value).replace(",", "."));
   const lng = parseFloat(String(longitudInput.value).replace(",", "."));
@@ -176,10 +211,12 @@ registroForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  registroMessage.textContent = "Guardando incidencia...";
+  registroMessage.textContent = files.length
+    ? "Guardando incidencia y subiendo fotos..."
+    : "Guardando incidencia...";
 
   try {
-    await addDoc(collection(db, "incidencias"), {
+    const incidenciaRef = await addDoc(collection(db, "incidencias"), {
       categoria,
       descripcion,
       lat,
@@ -189,13 +226,43 @@ registroForm.addEventListener("submit", async (e) => {
       creadoPor: currentUser.uid,
       nombreUsuario: currentProfile.nombre || currentUser.email,
       rolUsuario: currentProfile.rol,
-      fecha: serverTimestamp()
+      fecha: serverTimestamp(),
+      fotos: [],
+      totalFotos: 0
     });
+
+    const fotosSubidas = [];
+
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) continue;
+
+      const safeName = file.name.replace(/\s+/g, "_");
+      const filePath = `incidencias/${incidenciaRef.id}/${Date.now()}_${safeName}`;
+      const storageRef = ref(storage, filePath);
+
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      fotosSubidas.push({
+        nombre: file.name,
+        url,
+        path: filePath,
+        fecha: new Date().toISOString()
+      });
+    }
+
+    if (fotosSubidas.length) {
+      await updateDoc(doc(db, "incidencias", incidenciaRef.id), {
+        fotos: fotosSubidas,
+        totalFotos: fotosSubidas.length
+      });
+    }
 
     registroMessage.textContent = "Incidencia guardada correctamente.";
     registroForm.reset();
     categoriaInput.value = "";
     ubicacionInicialCapturada = false;
+    previewFotos.innerHTML = "";
 
     document.querySelectorAll(".tile-btn").forEach((b) => b.classList.remove("active"));
 
@@ -211,6 +278,6 @@ registroForm.addEventListener("submit", async (e) => {
     map.setView([-33.45694, -70.64827], 13);
   } catch (error) {
     console.error(error);
-    registroMessage.textContent = "Error al guardar la incidencia.";
+    registroMessage.textContent = "Error al guardar la incidencia o subir las fotos.";
   }
 });
