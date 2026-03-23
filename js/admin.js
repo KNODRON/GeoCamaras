@@ -1,14 +1,20 @@
 import { auth, db } from "./firebase-config.js";
 import { requireRole } from "./guards.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  signOut,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection,
   getDocs,
   query,
-  orderBy
+  orderBy,
+  updateDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const logoutBtn = document.getElementById("logoutBtn");
+const changePasswordBtn = document.getElementById("changePasswordBtn");
 const adminName = document.getElementById("adminName");
 
 const statTotal = document.getElementById("statTotal");
@@ -25,17 +31,34 @@ const tablaBody = document.getElementById("tablaIncidenciasBody");
 let map;
 let markersLayer;
 let allIncidencias = [];
+let currentUser = null;
 
 requireRole("admin", async (user, profile) => {
+  currentUser = user;
   adminName.textContent = `${profile.nombre || user.email} · Administrador`;
   initMap();
-  await loadIncidencias();
   bindEvents();
+  await loadIncidencias();
 });
 
 logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
   window.location.href = "./index.html";
+});
+
+changePasswordBtn.addEventListener("click", async () => {
+  if (!currentUser?.email) {
+    alert("No se encontró el correo del usuario.");
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, currentUser.email);
+    alert(`Te envié un correo para cambiar la contraseña a ${currentUser.email}`);
+  } catch (error) {
+    console.error("Error enviando correo de cambio de contraseña:", error);
+    alert("No se pudo enviar el correo para cambiar la contraseña.");
+  }
 });
 
 function bindEvents() {
@@ -55,12 +78,31 @@ function bindEvents() {
 }
 
 function initMap() {
-  map = L.map("mapAdmin").setView([-33.45694, -70.64827], 12);
+  map = L.map("mapAdmin", {
+    gestureHandling: true,
+    scrollWheelZoom: false
+  }).setView([-33.45694, -70.64827], 12);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
+
+  // Zoom con Ctrl + rueda en PC
+  map.getContainer().addEventListener(
+    "wheel",
+    (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          map.zoomIn();
+        } else {
+          map.zoomOut();
+        }
+      }
+    },
+    { passive: false }
+  );
 
   markersLayer = L.layerGroup().addTo(map);
 }
@@ -138,18 +180,37 @@ function renderTable(items) {
       <td>${safe(item.categoria)}</td>
       <td>${safe(item.descripcion)}</td>
       <td>${safe(item.direccion || "-")}</td>
-      <td>${renderEstado(item.estado || "pendiente")}</td>
+      <td>
+        <select class="estado-select" data-id="${item.id}">
+          <option value="pendiente" ${item.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+          <option value="en_proceso" ${item.estado === "en_proceso" ? "selected" : ""}>En proceso</option>
+          <option value="resuelto" ${item.estado === "resuelto" ? "selected" : ""}>Resuelto</option>
+        </select>
+      </td>
       <td>${formatFecha(item.fecha)}</td>
       <td>${safe(item.nombreUsuario || "-")}</td>
     `;
 
     tablaBody.appendChild(tr);
   });
-}
 
-function renderEstado(estado) {
-  const clean = safe(estado);
-  return `<span class="estado-badge estado-${clean}">${clean}</span>`;
+  document.querySelectorAll(".estado-select").forEach((select) => {
+    select.addEventListener("change", async (e) => {
+      const id = e.target.dataset.id;
+      const nuevoEstado = e.target.value;
+
+      try {
+        await updateDoc(doc(db, "incidencias", id), {
+          estado: nuevoEstado
+        });
+
+        await loadIncidencias();
+      } catch (error) {
+        console.error("Error actualizando estado:", error);
+        alert("No se pudo actualizar el estado.");
+      }
+    });
+  });
 }
 
 function renderMap(items) {
@@ -160,7 +221,16 @@ function renderMap(items) {
   const bounds = [];
 
   items.forEach((item) => {
-    if (typeof item.lat !== "number" || typeof item.lng !== "number") return;
+    if (
+      typeof item.lat !== "number" ||
+      typeof item.lng !== "number" ||
+      isNaN(item.lat) ||
+      isNaN(item.lng) ||
+      item.lat === 0 ||
+      item.lng === 0
+    ) {
+      return;
+    }
 
     const marker = L.marker([item.lat, item.lng]).bindPopup(`
       <strong>${safe(item.categoria)}</strong><br>
