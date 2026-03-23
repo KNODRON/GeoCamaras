@@ -47,7 +47,7 @@ function initMap() {
 
   map.on("click", (e) => {
     const { lat, lng } = e.latlng;
-    setLocation(lat, lng, "Ubicación seleccionada en el mapa.");
+    setLocation(lat, lng, "Ubicación ajustada manualmente en el mapa.");
   });
 }
 
@@ -64,8 +64,8 @@ function bindCategoriaButtons() {
 }
 
 function setLocation(lat, lng, message = "") {
-  latitudInput.value = lat.toFixed(6);
-  longitudInput.value = lng.toFixed(6);
+  latitudInput.value = Number(lat).toFixed(6);
+  longitudInput.value = Number(lng).toFixed(6);
 
   if (!marker) {
     marker = L.marker([lat, lng]).addTo(map);
@@ -111,12 +111,24 @@ registroForm.addEventListener("submit", async (e) => {
 
   const categoria = categoriaInput.value.trim();
   const descripcion = descripcionInput.value.trim();
-  const lat = Number(latitudInput.value);
-  const lng = Number(longitudInput.value);
   const direccion = direccionInput.value.trim();
 
+  const lat = parseFloat(String(latitudInput.value).replace(",", "."));
+  const lng = parseFloat(String(longitudInput.value).replace(",", "."));
+
   if (!categoria || !descripcion || Number.isNaN(lat) || Number.isNaN(lng)) {
-    registroMessage.textContent = "Completa categoría, descripción y ubicación.";
+    registroMessage.textContent = "Completa categoría, descripción y captura la ubicación.";
+    return;
+  }
+
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    registroMessage.textContent = "Las coordenadas no son válidas.";
+    return;
+  }
+
+  // Validación para evitar puntos absurdos fuera de Chile
+  if (lat > -17 || lat < -57 || lng > -66 || lng < -76) {
+    registroMessage.textContent = "La ubicación parece estar fuera de Chile. Verifica el punto en el mapa.";
     return;
   }
 
@@ -150,6 +162,8 @@ registroForm.addEventListener("submit", async (e) => {
       map.removeLayer(marker);
       marker = null;
     }
+
+    map.setView([-33.45694, -70.64827], 13);
   } catch (error) {
     console.error(error);
     registroMessage.textContent = "Error al guardar la incidencia.";
