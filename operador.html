@@ -10,6 +10,10 @@
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     crossorigin=""
   />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css"
+  />
 </head>
 <body>
   <header class="topbar">
@@ -23,6 +27,7 @@
 
     <div class="topbar-right">
       <span id="userName" class="user-badge">Usuario</span>
+      <button id="changePasswordBtn" class="btn-secondary">Cambiar contraseña</button>
       <button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
     </div>
   </header>
@@ -57,14 +62,14 @@
         <input type="hidden" id="latitud" />
         <input type="hidden" id="longitud" />
 
-        <p class="helper-text">
-          Usa <strong>Obtener ubicación</strong> para capturar el punto GPS, o toca el mapa para ajustarlo manualmente.
-        </p>
-
         <div class="form-group">
           <label for="direccion">Dirección / referencia</label>
           <input type="text" id="direccion" placeholder="Ej: Av. Principal con Pasaje 4" />
         </div>
+
+        <p class="helper-text">
+          Usa <strong>Obtener ubicación</strong> para capturar el punto GPS. Después podrás ajustarlo en el mapa si es necesario.
+        </p>
 
         <div class="form-actions">
           <button type="button" id="btnUbicacion" class="btn-secondary">Obtener ubicación</button>
@@ -85,6 +90,7 @@
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     crossorigin=""
   ></script>
+  <script src="https://unpkg.com/leaflet-gesture-handling"></script>
   <script type="module" src="./js/operador.js"></script>
 </body>
 </html>
