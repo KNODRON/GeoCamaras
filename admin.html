@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoRegistro | Administrador</title>
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-mini">GR</div>
+      <div>
+        <h1>GeoRegistro</h1>
+        <p>Panel Administrador</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <span id="adminName" class="user-badge">Administrador</span>
+      <button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="layout-admin">
+    <section class="stats-grid">
+      <article class="stat-card">
+        <h3>Total incidencias</h3>
+        <p id="statTotal">0</p>
+      </article>
+      <article class="stat-card">
+        <h3>Hoy</h3>
+        <p id="statHoy">0</p>
+      </article>
+      <article class="stat-card">
+        <h3>Pendientes</h3>
+        <p id="statPendientes">0</p>
+      </article>
+      <article class="stat-card">
+        <h3>Resueltas</h3>
+        <p id="statResueltas">0</p>
+      </article>
+    </section>
+
+    <section class="panel-card">
+      <div class="toolbar">
+        <div class="toolbar-filters">
+          <select id="filtroCategoria">
+            <option value="">Todas las categorías</option>
+            <option value="Alumbrado">Alumbrado</option>
+            <option value="Basura">Basura</option>
+            <option value="Seguridad">Seguridad</option>
+            <option value="Áreas Verdes">Áreas Verdes</option>
+            <option value="Zoonosis">Zoonosis</option>
+            <option value="Infraestructura">Infraestructura</option>
+          </select>
+
+          <select id="filtroEstado">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_proceso">En proceso</option>
+            <option value="resuelto">Resuelto</option>
+          </select>
+
+          <button id="btnLimpiarFiltros" class="btn-secondary">Limpiar filtros</button>
+        </div>
+
+        <div class="toolbar-actions">
+          <button id="btnExportarCSV" class="btn-primary">Exportar CSV</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-card panel-map">
+      <h2>Mapa general</h2>
+      <div id="mapAdmin"></div>
+    </section>
+
+    <section class="panel-card">
+      <h2>Listado de incidencias</h2>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Dirección</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody id="tablaIncidenciasBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+  <script type="module" src="./js/admin.js"></script>
+</body>
+</html>
