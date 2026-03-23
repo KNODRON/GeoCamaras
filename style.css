@@ -427,25 +427,38 @@ body {
     flex: 1 1 auto;
 }
 
+.estado-select {
+  width: 100%;
+  min-width: 150px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--gris-borde);
+  font-size: 13px;
+  font-weight: 700;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
 .estado-select.pendiente {
-  background-color: #ffe5e5;
-  color: #b30000;
-  font-weight: bold;
+  background: #ffe5e5 !important;
+  color: #b30000 !important;
+  border-color: #ef9a9a !important;
 }
 
 .estado-select.en_proceso {
-  background-color: #fff4e5;
-  color: #b36b00;
-  font-weight: bold;
+  background: #fff4e5 !important;
+  color: #b36b00 !important;
+  border-color: #f2c078 !important;
 }
 
 .estado-select.resuelto {
-  background-color: #e6ffed;
-  color: #006b2e;
-  font-weight: bold;
+  background: #e6ffed !important;
+  color: #006b2e !important;
+  border-color: #86d7a0 !important;
 }
 
-  .btn-ver-mapa {
+.btn-ver-mapa {
   padding: 6px 10px;
   border-radius: 8px;
   border: none;
@@ -453,8 +466,14 @@ body {
   color: white;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 700;
 }
 
 .btn-ver-mapa:hover {
   background: #2563eb;
+}
+
+.sin-punto {
+  color: #6b7280;
+  font-size: 12px;
 }
