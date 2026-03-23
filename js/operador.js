@@ -1,6 +1,9 @@
 import { auth, db } from "./firebase-config.js";
 import { requireRole } from "./guards.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  signOut,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection,
   addDoc,
@@ -8,6 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const logoutBtn = document.getElementById("logoutBtn");
+const changePasswordBtn = document.getElementById("changePasswordBtn");
 const userName = document.getElementById("userName");
 
 const categoriaInput = document.getElementById("categoria");
@@ -23,6 +27,7 @@ let map;
 let marker;
 let currentUser = null;
 let currentProfile = null;
+let ubicacionInicialCapturada = false;
 
 requireRole("operador", async (user, profile) => {
   currentUser = user;
@@ -37,15 +42,54 @@ logoutBtn.addEventListener("click", async () => {
   window.location.href = "./index.html";
 });
 
+changePasswordBtn.addEventListener("click", async () => {
+  if (!currentUser?.email) {
+    alert("No se encontró el correo del usuario.");
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, currentUser.email);
+    alert(`Te envié un correo para cambiar la contraseña a ${currentUser.email}`);
+  } catch (error) {
+    console.error("Error enviando correo de cambio de contraseña:", error);
+    alert("No se pudo enviar el correo para cambiar la contraseña.");
+  }
+});
+
 function initMap() {
-  map = L.map("mapOperador").setView([-33.45694, -70.64827], 13);
+  map = L.map("mapOperador", {
+    gestureHandling: true,
+    scrollWheelZoom: false
+  }).setView([-33.45694, -70.64827], 13);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
 
+  // Zoom con Ctrl + rueda en PC
+  map.getContainer().addEventListener(
+    "wheel",
+    (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          map.zoomIn();
+        } else {
+          map.zoomOut();
+        }
+      }
+    },
+    { passive: false }
+  );
+
   map.on("click", (e) => {
+    if (!ubicacionInicialCapturada) {
+      registroMessage.textContent = "Primero debes obtener la ubicación antes de ajustar el punto en el mapa.";
+      return;
+    }
+
     const { lat, lng } = e.latlng;
     setLocation(lat, lng, "Ubicación ajustada manualmente en el mapa.");
   });
@@ -92,7 +136,8 @@ btnUbicacion.addEventListener("click", () => {
     (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      setLocation(lat, lng, "Ubicación obtenida correctamente.");
+      ubicacionInicialCapturada = true;
+      setLocation(lat, lng, "Ubicación obtenida correctamente. Ahora puedes ajustar el punto en el mapa si es necesario.");
     },
     (error) => {
       console.error(error);
@@ -126,7 +171,6 @@ registroForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Validación para evitar puntos absurdos fuera de Chile
   if (lat > -17 || lat < -57 || lng > -66 || lng < -76) {
     registroMessage.textContent = "La ubicación parece estar fuera de Chile. Verifica el punto en el mapa.";
     return;
@@ -151,6 +195,7 @@ registroForm.addEventListener("submit", async (e) => {
     registroMessage.textContent = "Incidencia guardada correctamente.";
     registroForm.reset();
     categoriaInput.value = "";
+    ubicacionInicialCapturada = false;
 
     document.querySelectorAll(".tile-btn").forEach((b) => b.classList.remove("active"));
 
