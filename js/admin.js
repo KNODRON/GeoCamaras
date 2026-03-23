@@ -189,16 +189,28 @@ function renderTable(items) {
       </td>
       <td>${formatFecha(item.fecha)}</td>
       <td>${safe(item.nombreUsuario || "-")}</td>
+      <td>
+        <button class="btn-ver-mapa" data-lat="${item.lat}" data-lng="${item.lng}">
+          Ver
+        </button>
+      </td>
     `;
 
     tablaBody.appendChild(tr);
   });
 
   document.querySelectorAll(".estado-select").forEach((select) => {
+  function aplicarColor(select) {
+  select.classList.remove("pendiente", "en_proceso", "resuelto");
+  select.classList.add(select.value);
+  }
+
+  aplicarColor(select);
+    
     select.addEventListener("change", async (e) => {
       const id = e.target.dataset.id;
       const nuevoEstado = e.target.value;
-
+      aplicarColor(e.target); // 🔥 aplica color inmediato
       try {
         await updateDoc(doc(db, "incidencias", id), {
           estado: nuevoEstado
@@ -221,6 +233,10 @@ function renderMap(items) {
   const bounds = [];
 
   items.forEach((item) => {
+
+  // ❌ NO mostrar resueltos en el mapa
+  if (item.estado === "resuelto") return;
+    
     if (
       typeof item.lat !== "number" ||
       typeof item.lng !== "number" ||
