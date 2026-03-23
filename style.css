@@ -426,4 +426,21 @@ body {
 .topbar-right .btn-secondary {
     flex: 1 1 auto;
 }
+
+.estado-select.pendiente {
+  background-color: #ffe5e5;
+  color: #b30000;
+  font-weight: bold;
+}
+
+.estado-select.en_proceso {
+  background-color: #fff4e5;
+  color: #b36b00;
+  font-weight: bold;
+}
+
+.estado-select.resuelto {
+  background-color: #e6ffed;
+  color: #006b2e;
+  font-weight: bold;
 }
