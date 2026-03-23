@@ -194,13 +194,35 @@ function coordenadasValidas(item) {
   );
 }
 
+function renderFotosCell(item) {
+  const fotos = Array.isArray(item.fotos) ? item.fotos : [];
+
+  if (!fotos.length) {
+    return `<span class="sin-punto">Sin fotos</span>`;
+  }
+
+  const visibles = fotos.slice(0, 2).map((foto) => {
+    return `
+      <a href="${foto.url}" target="_blank" rel="noopener noreferrer" class="foto-thumb-link">
+        <img src="${foto.url}" alt="Foto evidencia" class="foto-thumb" />
+      </a>
+    `;
+  }).join("");
+
+  const extra = fotos.length > 2
+    ? `<span class="fotos-extra">+${fotos.length - 2}</span>`
+    : "";
+
+  return `<div class="fotos-cell">${visibles}${extra}</div>`;
+}
+
 function renderTable(items) {
   tablaBody.innerHTML = "";
 
   if (!items.length) {
     tablaBody.innerHTML = `
       <tr>
-        <td colspan="7">No hay incidencias para mostrar.</td>
+        <td colspan="8">No hay incidencias para mostrar.</td>
       </tr>
     `;
     return;
@@ -233,11 +255,12 @@ function renderTable(items) {
                  data-lng="${item.lng}"
                  data-categoria="${safe(item.categoria)}"
                  data-descripcion="${safe(item.descripcion)}"
-                 data-direccion="${safe(item.direccion || "-")}"
+                 data-direccion="${safe(item.direccion || "-")}" 
                >Ver</button>`
             : `<span class="sin-punto">Sin punto</span>`
         }
       </td>
+      <td>${renderFotosCell(item)}</td>
     `;
 
     tablaBody.appendChild(tr);
@@ -300,11 +323,15 @@ function renderMap(items) {
     if (item.estado === "resuelto") return;
     if (!coordenadasValidas(item)) return;
 
+    const fotos = Array.isArray(item.fotos) ? item.fotos : [];
+    const textoFotos = fotos.length ? `<br><strong>Fotos:</strong> ${fotos.length}` : "";
+
     const marker = L.marker([item.lat, item.lng]).bindPopup(`
       <strong>${safe(item.categoria)}</strong><br>
       ${safe(item.descripcion)}<br>
       <strong>Estado:</strong> ${safe(item.estado || "pendiente")}<br>
       <strong>Dirección:</strong> ${safe(item.direccion || "-")}
+      ${textoFotos}
     `);
 
     marker.addTo(markersLayer);
@@ -332,7 +359,7 @@ function safe(value) {
 }
 
 function exportarCSV(items) {
-  const headers = ["Categoria", "Descripcion", "Direccion", "Estado", "Fecha", "Usuario", "Lat", "Lng"];
+  const headers = ["Categoria", "Descripcion", "Direccion", "Estado", "Fecha", "Usuario", "Lat", "Lng", "TotalFotos"];
 
   const rows = items.map((item) => [
     item.categoria || "",
@@ -342,7 +369,8 @@ function exportarCSV(items) {
     formatFecha(item.fecha),
     item.nombreUsuario || "",
     item.lat || "",
-    item.lng || ""
+    item.lng || "",
+    Array.isArray(item.fotos) ? item.fotos.length : 0
   ]);
 
   const csv = [headers, ...rows]
