@@ -444,3 +444,17 @@ body {
   color: #006b2e;
   font-weight: bold;
 }
+
+  .btn-ver-mapa {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-ver-mapa:hover {
+  background: #2563eb;
+}
