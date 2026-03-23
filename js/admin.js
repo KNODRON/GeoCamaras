@@ -163,7 +163,6 @@ function renderStats(items) {
 function aplicarColorEstado(select) {
   const estado = select.value;
 
-  // Limpieza de estilos previos
   select.style.backgroundColor = "";
   select.style.color = "";
   select.style.borderColor = "";
