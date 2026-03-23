@@ -391,4 +391,10 @@ body {
   .panel-map #mapAdmin {
     height: 360px;
   }
+
+  .helper-text {
+  margin: -4px 0 0;
+  font-size: 14px;
+  color: var(--texto-suave);
+  }
 }
