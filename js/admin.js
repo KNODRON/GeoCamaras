@@ -88,7 +88,6 @@ function initMap() {
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
 
-  // Zoom con Ctrl + rueda en PC
   map.getContainer().addEventListener(
     "wheel",
     (e) => {
@@ -161,13 +160,29 @@ function renderStats(items) {
   statResueltas.textContent = resueltas;
 }
 
+function aplicarColorEstado(select) {
+  select.classList.remove("pendiente", "en_proceso", "resuelto");
+  select.classList.add(select.value);
+}
+
+function coordenadasValidas(item) {
+  return (
+    typeof item.lat === "number" &&
+    typeof item.lng === "number" &&
+    !isNaN(item.lat) &&
+    !isNaN(item.lng) &&
+    item.lat !== 0 &&
+    item.lng !== 0
+  );
+}
+
 function renderTable(items) {
   tablaBody.innerHTML = "";
 
   if (!items.length) {
     tablaBody.innerHTML = `
       <tr>
-        <td colspan="6">No hay incidencias para mostrar.</td>
+        <td colspan="7">No hay incidencias para mostrar.</td>
       </tr>
     `;
     return;
@@ -175,6 +190,7 @@ function renderTable(items) {
 
   items.forEach((item) => {
     const tr = document.createElement("tr");
+    const tieneCoordenadas = coordenadasValidas(item);
 
     tr.innerHTML = `
       <td>${safe(item.categoria)}</td>
@@ -190,9 +206,19 @@ function renderTable(items) {
       <td>${formatFecha(item.fecha)}</td>
       <td>${safe(item.nombreUsuario || "-")}</td>
       <td>
-        <button class="btn-ver-mapa" data-lat="${item.lat}" data-lng="${item.lng}">
-          Ver
-        </button>
+        ${
+          tieneCoordenadas
+            ? `<button
+                 type="button"
+                 class="btn-ver-mapa"
+                 data-lat="${item.lat}"
+                 data-lng="${item.lng}"
+                 data-categoria="${safe(item.categoria)}"
+                 data-descripcion="${safe(item.descripcion)}"
+                 data-direccion="${safe(item.direccion || "-")}"
+               >Ver</button>`
+            : `<span class="sin-punto">Sin punto</span>`
+        }
       </td>
     `;
 
@@ -200,17 +226,14 @@ function renderTable(items) {
   });
 
   document.querySelectorAll(".estado-select").forEach((select) => {
-  function aplicarColor(select) {
-  select.classList.remove("pendiente", "en_proceso", "resuelto");
-  select.classList.add(select.value);
-  }
+    aplicarColorEstado(select);
 
-  aplicarColor(select);
-    
     select.addEventListener("change", async (e) => {
       const id = e.target.dataset.id;
       const nuevoEstado = e.target.value;
-      aplicarColor(e.target); // 🔥 aplica color inmediato
+
+      aplicarColorEstado(e.target);
+
       try {
         await updateDoc(doc(db, "incidencias", id), {
           estado: nuevoEstado
@@ -223,6 +246,29 @@ function renderTable(items) {
       }
     });
   });
+
+  document.querySelectorAll(".btn-ver-mapa").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const lat = parseFloat(btn.dataset.lat);
+      const lng = parseFloat(btn.dataset.lng);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        alert("Esta incidencia no tiene ubicación válida.");
+        return;
+      }
+
+      map.setView([lat, lng], 18);
+
+      L.popup()
+        .setLatLng([lat, lng])
+        .setContent(`
+          <strong>${btn.dataset.categoria}</strong><br>
+          ${btn.dataset.descripcion}<br>
+          <strong>Dirección:</strong> ${btn.dataset.direccion}
+        `)
+        .openOn(map);
+    });
+  });
 }
 
 function renderMap(items) {
@@ -233,20 +279,8 @@ function renderMap(items) {
   const bounds = [];
 
   items.forEach((item) => {
-
-  // ❌ NO mostrar resueltos en el mapa
-  if (item.estado === "resuelto") return;
-    
-    if (
-      typeof item.lat !== "number" ||
-      typeof item.lng !== "number" ||
-      isNaN(item.lat) ||
-      isNaN(item.lng) ||
-      item.lat === 0 ||
-      item.lng === 0
-    ) {
-      return;
-    }
+    if (item.estado === "resuelto") return;
+    if (!coordenadasValidas(item)) return;
 
     const marker = L.marker([item.lat, item.lng]).bindPopup(`
       <strong>${safe(item.categoria)}</strong><br>
