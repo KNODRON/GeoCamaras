@@ -367,34 +367,63 @@ body {
     padding: 14px;
     flex-direction: column;
     align-items: stretch;
-  }
+}
 
-  .topbar-left,
-  .topbar-right {
+.topbar-left,
+.topbar-right {
     justify-content: space-between;
-  }
+}
 
-  .layout-operador,
-  .layout-admin {
+.layout-operador,
+.layout-admin {
     padding: 14px;
-  }
+}
 
-  .form-row {
+.form-row {
     grid-template-columns: 1fr;
-  }
+}
 
-  .tile-btn {
+.tile-btn {
     min-height: 120px;
-  }
+}
 
-  .panel-map #mapOperador,
-  .panel-map #mapAdmin {
+.panel-map #mapOperador,
+.panel-map #mapAdmin {
     height: 360px;
-  }
+}
 
-  .helper-text {
+.helper-text {
   margin: -4px 0 0;
   font-size: 14px;
   color: var(--texto-suave);
-  }
+}
+
+.helper-text {
+  margin: -4px 0 0;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.estado-select {
+  width: 100%;
+  min-width: 150px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--gris-borde);
+  background: white;
+  font-size: 13px;
+}
+
+.topbar-right {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+.topbar-right {
+    gap: 8px;
+}
+
+.topbar-right .btn-secondary {
+    flex: 1 1 auto;
+}
 }
