@@ -4,12 +4,12 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBinfL_PpNgWpHZ6cVA25LAkdaE9hDgoAI",
-  authDomain: "geocamara-913d6.firebaseapp.com",
-  projectId: "geocamara-913d6",
-  storageBucket: "geocamara-913d6.firebasestorage.app",
-  messagingSenderId: "805498931282",
-  appId: "G-WM6LV8TCJ2"
+  apiKey: "AIzaSyAO4zoD0wcnRnxTwPTm--DWndvO-h4FGkU",
+  authDomain: "georegistro-60e8b.firebaseapp.com",
+  projectId: "georegistro-60e8b",
+  storageBucket: "georegistro-60e8b.firebasestorage.app",
+  messagingSenderId: "277287558145",
+  appId: "1:277287558145:web:7be79ca42e9fed466db400"
 };
 
 const app = initializeApp(firebaseConfig);
