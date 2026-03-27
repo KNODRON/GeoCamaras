@@ -84,10 +84,17 @@
     <section class="panel-card panel-map">
       <h2>Mapa general</h2>
 
-      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-      <input type="checkbox" id="toggleResueltos">
-      Mostrar incidencias resueltas
-      </label>
+      <div class="map-controls">
+        <label class="map-toggle">
+          <input type="checkbox" id="toggleResueltos">
+          Mostrar incidencias resueltas
+        </label>
+
+       <label class="map-toggle">
+         <input type="checkbox" id="toggleHeatmap">
+         Mostrar mapa de calor
+       </label>
+     </div>
       
       <div id="mapAdmin"></div>
     </section>
@@ -120,6 +127,10 @@
     crossorigin=""
   ></script>
   <script src="https://unpkg.com/leaflet-gesture-handling"></script>
-  <script type="module" src="./js/admin.js"></script>
+  <script
+    src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"
+    crossorigin=""
+></script>
+<script type="module" src="./js/admin.js"></script>
 </body>
 </html>
