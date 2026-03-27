@@ -541,3 +541,19 @@ body {
   color: #6b7280;
   font-size: 12px;
 }
+
+.map-controls {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.map-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}  
