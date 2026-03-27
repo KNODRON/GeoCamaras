@@ -14,6 +14,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 let mostrarResueltos = false;
+let mostrarHeatmap = false;
 
 const logoutBtn = document.getElementById("logoutBtn");
 const changePasswordBtn = document.getElementById("changePasswordBtn");
@@ -30,9 +31,11 @@ const btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
 const btnExportarCSV = document.getElementById("btnExportarCSV");
 const tablaBody = document.getElementById("tablaIncidenciasBody");
 const toggleResueltos = document.getElementById("toggleResueltos");
+const toggleHeatmap = document.getElementById("toggleHeatmap");
 
 let map;
 let markersLayer;
+let heatLayer = null;
 let allIncidencias = [];
 let currentUser = null;
 
@@ -82,6 +85,13 @@ function bindEvents() {
   if (toggleResueltos) {
     toggleResueltos.addEventListener("change", (e) => {
       mostrarResueltos = e.target.checked;
+      renderAll();
+    });
+  }
+
+  if (toggleHeatmap) {
+    toggleHeatmap.addEventListener("change", (e) => {
+      mostrarHeatmap = e.target.checked;
       renderAll();
     });
   }
@@ -143,11 +153,22 @@ function getFilteredIncidencias() {
   });
 }
 
+function getMapIncidencias(items) {
+  return items.filter((item) => {
+    if (!mostrarResueltos && item.estado === "resuelto") return false;
+    if (!coordenadasValidas(item)) return false;
+    return true;
+  });
+}
+
 function renderAll() {
   const filtered = getFilteredIncidencias();
+  const mapItems = getMapIncidencias(filtered);
+
   renderStats(filtered);
   renderTable(filtered);
-  renderMap(filtered);
+  renderMap(mapItems);
+  renderHeatmap(mapItems);
 }
 
 function renderStats(items) {
@@ -334,9 +355,6 @@ function renderMap(items) {
   const bounds = [];
 
   items.forEach((item) => {
-    if (!mostrarResueltos && item.estado === "resuelto") return;
-    if (!coordenadasValidas(item)) return;
-
     let color = "#ef4444";
     if (item.estado === "en_proceso") color = "#f59e0b";
     if (item.estado === "resuelto") color = "#22c55e";
@@ -366,6 +384,39 @@ function renderMap(items) {
   if (bounds.length) {
     map.fitBounds(bounds, { padding: [30, 30] });
   }
+}
+
+function renderHeatmap(items) {
+  if (heatLayer) {
+    map.removeLayer(heatLayer);
+    heatLayer = null;
+  }
+
+  if (!mostrarHeatmap || !items.length) return;
+
+  const heatPoints = items.map((item) => {
+    let intensity = 0.7;
+    if (item.estado === "pendiente") intensity = 1.0;
+    if (item.estado === "en_proceso") intensity = 0.8;
+    if (item.estado === "resuelto") intensity = 0.4;
+
+    return [item.lat, item.lng, intensity];
+  });
+
+  heatLayer = L.heatLayer(heatPoints, {
+    radius: 28,
+    blur: 20,
+    maxZoom: 17,
+    minOpacity: 0.35,
+    gradient: {
+      0.2: "#3b82f6",
+      0.4: "#22c55e",
+      0.6: "#f59e0b",
+      0.8: "#ef4444"
+    }
+  });
+
+  heatLayer.addTo(map);
 }
 
 function formatFecha(timestamp) {
