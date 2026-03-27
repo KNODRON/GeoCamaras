@@ -13,6 +13,8 @@ import {
   doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+let mostrarResueltos = false;
+
 const logoutBtn = document.getElementById("logoutBtn");
 const changePasswordBtn = document.getElementById("changePasswordBtn");
 const adminName = document.getElementById("adminName");
@@ -27,6 +29,7 @@ const filtroEstado = document.getElementById("filtroEstado");
 const btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
 const btnExportarCSV = document.getElementById("btnExportarCSV");
 const tablaBody = document.getElementById("tablaIncidenciasBody");
+const toggleResueltos = document.getElementById("toggleResueltos");
 
 let map;
 let markersLayer;
@@ -75,6 +78,13 @@ function bindEvents() {
     const filtered = getFilteredIncidencias();
     exportarCSV(filtered);
   });
+
+  if (toggleResueltos) {
+    toggleResueltos.addEventListener("change", (e) => {
+      mostrarResueltos = e.target.checked;
+      renderAll();
+    });
+  }
 }
 
 function initMap() {
@@ -201,17 +211,21 @@ function renderFotosCell(item) {
     return `<span class="sin-punto">Sin fotos</span>`;
   }
 
-  const visibles = fotos.slice(0, 2).map((foto) => {
-    return `
-      <a href="${foto.url}" target="_blank" rel="noopener noreferrer" class="foto-thumb-link">
-        <img src="${foto.url}" alt="Foto evidencia" class="foto-thumb" />
-      </a>
-    `;
-  }).join("");
+  const visibles = fotos
+    .slice(0, 2)
+    .map((foto) => {
+      return `
+        <a href="${foto.url}" target="_blank" rel="noopener noreferrer" class="foto-thumb-link">
+          <img src="${foto.url}" alt="Foto evidencia" class="foto-thumb" />
+        </a>
+      `;
+    })
+    .join("");
 
-  const extra = fotos.length > 2
-    ? `<span class="fotos-extra">+${fotos.length - 2}</span>`
-    : "";
+  const extra =
+    fotos.length > 2
+      ? `<span class="fotos-extra">+${fotos.length - 2}</span>`
+      : "";
 
   return `<div class="fotos-cell">${visibles}${extra}</div>`;
 }
@@ -255,7 +269,7 @@ function renderTable(items) {
                  data-lng="${item.lng}"
                  data-categoria="${safe(item.categoria)}"
                  data-descripcion="${safe(item.descripcion)}"
-                 data-direccion="${safe(item.direccion || "-")}" 
+                 data-direccion="${safe(item.direccion || "-")}"
                >Ver</button>`
             : `<span class="sin-punto">Sin punto</span>`
         }
@@ -320,16 +334,27 @@ function renderMap(items) {
   const bounds = [];
 
   items.forEach((item) => {
-    if (item.estado === "resuelto") return;
+    if (!mostrarResueltos && item.estado === "resuelto") return;
     if (!coordenadasValidas(item)) return;
+
+    let color = "#ef4444";
+    if (item.estado === "en_proceso") color = "#f59e0b";
+    if (item.estado === "resuelto") color = "#22c55e";
 
     const fotos = Array.isArray(item.fotos) ? item.fotos : [];
     const textoFotos = fotos.length ? `<br><strong>Fotos:</strong> ${fotos.length}` : "";
 
-    const marker = L.marker([item.lat, item.lng]).bindPopup(`
+    const marker = L.circleMarker([item.lat, item.lng], {
+      radius: 8,
+      fillColor: color,
+      color: "#000",
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.85
+    }).bindPopup(`
       <strong>${safe(item.categoria)}</strong><br>
       ${safe(item.descripcion)}<br>
-      <strong>Estado:</strong> ${safe(item.estado || "pendiente")}<br>
+      <strong>Estado:</strong> ${safe(item.estado)}<br>
       <strong>Dirección:</strong> ${safe(item.direccion || "-")}
       ${textoFotos}
     `);
