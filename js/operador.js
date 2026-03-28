@@ -67,6 +67,11 @@ btnPanelFloating.addEventListener("click", togglePanel);
 
 function togglePanel() {
   panelOperador.classList.toggle("open");
+
+  if (panelOperador.classList.contains("open")) {
+    panelOperador.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   setTimeout(() => {
     if (map) map.invalidateSize();
   }, 200);
