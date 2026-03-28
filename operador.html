@@ -34,7 +34,7 @@
     <button id="btnUbicacionFloating" class="floating-action secondary" type="button" title="Obtener ubicación">
       ⦿
     </button>
-    <button id="btnPanelFloating" class="floating-action primary" type="button" title="Abrir formulario">
+    <button id="btnPanelFloating" class="floating-action primary" type="button" title="Abrir panel">
       ☰
     </button>
   </div>
@@ -42,7 +42,19 @@
   <aside id="panelOperador" class="operador-bottomsheet">
     <div class="sheet-handle"></div>
 
-    <section class="sheet-card form-first">
+    <section class="sheet-card">
+      <h3>Categorías</h3>
+      <div class="grid-categorias compact">
+        <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
+        <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
+        <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
+        <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
+        <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
+        <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
+      </div>
+    </section>
+
+    <section class="sheet-card">
       <h3>Registrar incidencia</h3>
 
       <form id="registroForm" class="registro-form">
@@ -77,21 +89,9 @@
       </form>
     </section>
 
-    <section class="sheet-card">
-      <h3>Categorías</h3>
-      <div class="grid-categorias compact">
-        <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
-        <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
-        <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
-        <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
-        <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
-        <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
-      </div>
-    </section>
-
-    <section class="sheet-card session-card">
+    <section class="sheet-card session-card compact-session">
       <div class="session-inline">
-        <div>
+        <div class="session-meta">
           <h4>Sesión</h4>
           <div id="userName" class="user-badge-inline">Usuario</div>
         </div>
