@@ -33,11 +33,22 @@ const tablaBody = document.getElementById("tablaIncidenciasBody");
 const toggleResueltos = document.getElementById("toggleResueltos");
 const toggleHeatmap = document.getElementById("toggleHeatmap");
 
+const btnVistaMapa = document.getElementById("btnVistaMapa");
+const btnVistaListado = document.getElementById("btnVistaListado");
+const btnVolverMapa = document.getElementById("btnVolverMapa");
+const vistaMapa = document.getElementById("vistaMapa");
+const vistaListado = document.getElementById("vistaListado");
+
+const btnMapaBase = document.getElementById("btnMapaBase");
+const btnMapaSatelital = document.getElementById("btnMapaSatelital");
+
 let map;
 let markersLayer;
 let heatLayer = null;
 let allIncidencias = [];
 let currentUser = null;
+let baseLayer;
+let satLayer;
 
 requireRole("admin", async (user, profile) => {
   currentUser = user;
@@ -78,8 +89,7 @@ function bindEvents() {
   });
 
   btnExportarCSV.addEventListener("click", () => {
-    const filtered = getFilteredIncidencias();
-    exportarCSV(filtered);
+    exportarCSV(getFilteredIncidencias());
   });
 
   if (toggleResueltos) {
@@ -95,6 +105,29 @@ function bindEvents() {
       renderAll();
     });
   }
+
+  btnVistaMapa.addEventListener("click", () => activarVista("mapa"));
+  btnVistaListado.addEventListener("click", () => activarVista("listado"));
+  btnVolverMapa.addEventListener("click", () => activarVista("mapa"));
+
+  btnMapaBase.addEventListener("click", activarMapaBase);
+  btnMapaSatelital.addEventListener("click", activarMapaSatelital);
+}
+
+function activarVista(vista) {
+  vistaMapa.classList.remove("active");
+  vistaListado.classList.remove("active");
+  btnVistaMapa.classList.remove("active-view-btn");
+  btnVistaListado.classList.remove("active-view-btn");
+
+  if (vista === "mapa") {
+    vistaMapa.classList.add("active");
+    btnVistaMapa.classList.add("active-view-btn");
+    setTimeout(() => map.invalidateSize(), 150);
+  } else {
+    vistaListado.classList.add("active");
+    btnVistaListado.classList.add("active-view-btn");
+  }
 }
 
 function initMap() {
@@ -103,27 +136,48 @@ function initMap() {
     scrollWheelZoom: false
   }).setView([-33.45694, -70.64827], 12);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  baseLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors"
-  }).addTo(map);
+  });
+
+  satLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution: "Tiles &copy; Esri"
+    }
+  );
+
+  baseLayer.addTo(map);
 
   map.getContainer().addEventListener(
     "wheel",
     (e) => {
       if (e.ctrlKey) {
         e.preventDefault();
-        if (e.deltaY < 0) {
-          map.zoomIn();
-        } else {
-          map.zoomOut();
-        }
+        if (e.deltaY < 0) map.zoomIn();
+        else map.zoomOut();
       }
     },
     { passive: false }
   );
 
   markersLayer = L.layerGroup().addTo(map);
+}
+
+function activarMapaBase() {
+  if (map.hasLayer(satLayer)) map.removeLayer(satLayer);
+  if (!map.hasLayer(baseLayer)) baseLayer.addTo(map);
+  btnMapaBase.classList.add("active-view-btn");
+  btnMapaSatelital.classList.remove("active-view-btn");
+}
+
+function activarMapaSatelital() {
+  if (map.hasLayer(baseLayer)) map.removeLayer(baseLayer);
+  if (!map.hasLayer(satLayer)) satLayer.addTo(map);
+  btnMapaSatelital.classList.add("active-view-btn");
+  btnMapaBase.classList.remove("active-view-btn");
 }
 
 async function loadIncidencias() {
@@ -183,12 +237,9 @@ function renderStats(items) {
     return fecha >= hoy;
   }).length;
 
-  const pendientes = items.filter((item) => item.estado === "pendiente").length;
-  const resueltas = items.filter((item) => item.estado === "resuelto").length;
-
   statHoy.textContent = totalHoy;
-  statPendientes.textContent = pendientes;
-  statResueltas.textContent = resueltas;
+  statPendientes.textContent = items.filter((i) => i.estado === "pendiente").length;
+  statResueltas.textContent = items.filter((i) => i.estado === "resuelto").length;
 }
 
 function aplicarColorEstado(select) {
@@ -225,39 +276,13 @@ function coordenadasValidas(item) {
   );
 }
 
-function renderFotosCell(item) {
-  const fotos = Array.isArray(item.fotos) ? item.fotos : [];
-
-  if (!fotos.length) {
-    return `<span class="sin-punto">Sin fotos</span>`;
-  }
-
-  const visibles = fotos
-    .slice(0, 2)
-    .map((foto) => {
-      return `
-        <a href="${foto.url}" target="_blank" rel="noopener noreferrer" class="foto-thumb-link">
-          <img src="${foto.url}" alt="Foto evidencia" class="foto-thumb" />
-        </a>
-      `;
-    })
-    .join("");
-
-  const extra =
-    fotos.length > 2
-      ? `<span class="fotos-extra">+${fotos.length - 2}</span>`
-      : "";
-
-  return `<div class="fotos-cell">${visibles}${extra}</div>`;
-}
-
 function renderTable(items) {
   tablaBody.innerHTML = "";
 
   if (!items.length) {
     tablaBody.innerHTML = `
       <tr>
-        <td colspan="8">No hay incidencias para mostrar.</td>
+        <td colspan="7">No hay incidencias para mostrar.</td>
       </tr>
     `;
     return;
@@ -284,18 +309,17 @@ function renderTable(items) {
         ${
           tieneCoordenadas
             ? `<button
-                 type="button"
-                 class="btn-ver-mapa"
-                 data-lat="${item.lat}"
-                 data-lng="${item.lng}"
-                 data-categoria="${safe(item.categoria)}"
-                 data-descripcion="${safe(item.descripcion)}"
-                 data-direccion="${safe(item.direccion || "-")}"
-               >Ver</button>`
+                type="button"
+                class="btn-ver-mapa"
+                data-lat="${item.lat}"
+                data-lng="${item.lng}"
+                data-categoria="${safe(item.categoria)}"
+                data-descripcion="${safe(item.descripcion)}"
+                data-direccion="${safe(item.direccion || "-")}"
+              >Ver</button>`
             : `<span class="sin-punto">Sin punto</span>`
         }
       </td>
-      <td>${renderFotosCell(item)}</td>
     `;
 
     tablaBody.appendChild(tr);
@@ -314,7 +338,6 @@ function renderTable(items) {
         await updateDoc(doc(db, "incidencias", id), {
           estado: nuevoEstado
         });
-
         await loadIncidencias();
       } catch (error) {
         console.error("Error actualizando estado:", error);
@@ -333,6 +356,7 @@ function renderTable(items) {
         return;
       }
 
+      activarVista("mapa");
       map.setView([lat, lng], 18);
 
       L.popup()
@@ -359,13 +383,10 @@ function renderMap(items) {
     if (item.estado === "en_proceso") color = "#f59e0b";
     if (item.estado === "resuelto") color = "#22c55e";
 
-    const fotos = Array.isArray(item.fotos) ? item.fotos : [];
-    const textoFotos = fotos.length ? `<br><strong>Fotos:</strong> ${fotos.length}` : "";
-
     const marker = L.circleMarker([item.lat, item.lng], {
       radius: 8,
       fillColor: color,
-      color: "#000",
+      color: "#111827",
       weight: 1,
       opacity: 1,
       fillOpacity: 0.85
@@ -374,7 +395,6 @@ function renderMap(items) {
       ${safe(item.descripcion)}<br>
       <strong>Estado:</strong> ${safe(item.estado)}<br>
       <strong>Dirección:</strong> ${safe(item.direccion || "-")}
-      ${textoFotos}
     `);
 
     marker.addTo(markersLayer);
@@ -435,7 +455,7 @@ function safe(value) {
 }
 
 function exportarCSV(items) {
-  const headers = ["Categoria", "Descripcion", "Direccion", "Estado", "Fecha", "Usuario", "Lat", "Lng", "TotalFotos"];
+  const headers = ["Categoria", "Descripcion", "Direccion", "Estado", "Fecha", "Usuario", "Lat", "Lng"];
 
   const rows = items.map((item) => [
     item.categoria || "",
@@ -445,8 +465,7 @@ function exportarCSV(items) {
     formatFecha(item.fecha),
     item.nombreUsuario || "",
     item.lat || "",
-    item.lng || "",
-    Array.isArray(item.fotos) ? item.fotos.length : 0
+    item.lng || ""
   ]);
 
   const csv = [headers, ...rows]
