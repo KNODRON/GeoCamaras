@@ -1061,3 +1061,244 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* =========================
+   FIX OPERADOR MAPA + PANEL
+========================= */
+.map-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  border: none !important;
+  border-radius: 0 !important;
+  z-index: 1;
+}
+
+#mapOperador {
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.operador-ptz-body {
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.operador-topbar-floating {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 1200;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--gris-borde);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.operador-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.operador-topbar-left h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.operador-topbar-left p {
+  margin: 4px 0 0;
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.menu-float-btn {
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--azul-a), var(--azul-b));
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.operador-floating-actions {
+  position: fixed;
+  right: 12px;
+  bottom: 14px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.floating-action {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  box-shadow: var(--shadow);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.floating-action.primary {
+  background: linear-gradient(135deg, var(--verde-a), var(--verde-b));
+  color: white;
+}
+
+.floating-action.secondary {
+  background: white;
+  color: var(--azul-b);
+  border: 1px solid var(--gris-borde);
+}
+
+.operador-bottomsheet {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1250;
+  max-height: 68vh;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--gris-borde);
+  border-radius: 14px 14px 10px 10px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  transform: translateY(calc(100% + 20px));
+  transition: transform 0.25s ease;
+}
+
+.operador-bottomsheet.open {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  width: 48px;
+  height: 5px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  margin: 0 auto 12px;
+}
+
+.sheet-card {
+  background: white;
+  border: 1px solid var(--gris-borde);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.sheet-card h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.compact-session {
+  padding: 10px 12px;
+}
+
+.session-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.session-meta h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--texto-suave);
+}
+
+.user-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(57, 117, 183, 0.1);
+  color: var(--azul-b);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.session-inline-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.btn-danger {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  background: #dc2626;
+  color: white;
+}
+
+.grid-categorias.compact {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-categorias.compact .tile-btn {
+  min-height: 82px;
+  font-size: 15px;
+  gap: 8px;
+}
+
+.grid-categorias.compact .tile-btn span {
+  font-size: 13px;
+}
+
+@media (min-width: 1025px) {
+  .operador-topbar-floating {
+    left: 18px;
+    right: auto;
+    width: 420px;
+  }
+
+  .operador-bottomsheet {
+    top: 90px;
+    bottom: 18px;
+    right: 18px;
+    left: auto;
+    width: 390px;
+    max-height: calc(100vh - 108px);
+    transform: translateX(calc(100% + 24px));
+    border-radius: 12px;
+  }
+
+  .operador-bottomsheet.open {
+    transform: translateX(0);
+  }
+
+  .sheet-handle {
+    display: none;
+  }
+}
