@@ -74,7 +74,7 @@ function togglePanel() {
 
   setTimeout(() => {
     if (map) map.invalidateSize();
-  }, 200);
+  }, 250);
 }
 
 function initMap() {
@@ -82,7 +82,8 @@ function initMap() {
 
   map = L.map("mapOperador", {
     gestureHandling: !esMovil,
-    scrollWheelZoom: esMovil
+    scrollWheelZoom: esMovil,
+    zoomControl: true
   }).setView([-33.45694, -70.64827], 13);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -113,6 +114,8 @@ function initMap() {
     const { lat, lng } = e.latlng;
     setLocation(lat, lng, "Ubicación ajustada manualmente en el mapa.");
   });
+
+  setTimeout(() => map.invalidateSize(), 400);
 }
 
 function bindCategoriaButtons() {
@@ -123,12 +126,6 @@ function bindCategoriaButtons() {
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       categoriaInput.value = btn.dataset.categoria;
-
-      if (window.matchMedia("(max-width: 1024px)").matches) {
-        setTimeout(() => {
-          panelOperador.scrollTo({ top: panelOperador.scrollHeight, behavior: "smooth" });
-        }, 100);
-      }
     });
   });
 }
