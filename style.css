@@ -935,3 +935,129 @@ body {
     font-size: 22px;
   }
 }
+
+/* =========================
+   AJUSTE FINO OPERADOR
+========================= */
+.operador-bottomsheet {
+  max-height: 64vh;
+  padding: 12px;
+}
+
+.sheet-card {
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.sheet-card h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.form-first {
+  order: 1;
+}
+
+.session-card {
+  order: 3;
+  padding: 10px 12px;
+}
+
+.user-badge-inline {
+  margin-bottom: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.session-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.session-inline h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+
+.session-inline-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.grid-categorias.compact .tile-btn {
+  min-height: 82px;
+  font-size: 15px;
+}
+
+.grid-categorias.compact .tile-btn span {
+  font-size: 13px;
+}
+
+.operador-topbar-floating {
+  padding: 8px 10px;
+}
+
+.operador-topbar-left h1 {
+  font-size: 18px;
+}
+
+.operador-topbar-left p {
+  font-size: 12px;
+}
+
+.menu-float-btn {
+  width: 44px;
+  height: 44px;
+}
+
+.operador-floating-actions {
+  right: 12px;
+  bottom: 14px;
+  gap: 10px;
+}
+
+.floating-action {
+  width: 52px;
+  height: 52px;
+  font-size: 22px;
+}
+
+@media (max-width: 640px) {
+  .operador-bottomsheet {
+    max-height: 68vh;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .sheet-card {
+    padding: 10px;
+  }
+
+  .session-inline {
+    align-items: stretch;
+  }
+
+  .session-inline-actions {
+    width: 100%;
+  }
+
+  .session-inline-actions button {
+    flex: 1 1 auto;
+  }
+
+  .form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
