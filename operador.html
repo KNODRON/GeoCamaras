@@ -15,9 +15,9 @@
     href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css"
   />
 </head>
-<body class="operador-body">
-  <header class="topbar">
-    <div class="topbar-left">
+<body class="operador-ptz-body">
+  <div class="operador-topbar-floating">
+    <div class="operador-topbar-left">
       <div class="brand-mini">GR</div>
       <div>
         <h1>GeoRegistro</h1>
@@ -25,70 +25,80 @@
       </div>
     </div>
 
-    <div class="topbar-right">
-      <span id="userName" class="user-badge">Usuario</span>
-      <button id="changePasswordBtn" class="btn-secondary">Cambiar contraseña</button>
-      <button id="logoutBtn" class="btn-secondary">Cerrar sesión</button>
-    </div>
-  </header>
+    <button id="togglePanelOperador" class="menu-float-btn" type="button">☰</button>
+  </div>
 
-  <main class="operador-shell">
-    <section class="operador-map-wrap">
-      <div class="operador-map-toolbar">
-        <button id="togglePanelOperador" class="btn-primary">Formulario</button>
+  <div id="mapOperador" class="map-fullscreen"></div>
+
+  <div class="operador-floating-actions">
+    <button id="btnUbicacionFloating" class="floating-action secondary" type="button" title="Obtener ubicación">
+      ⦿
+    </button>
+    <button id="btnPanelFloating" class="floating-action primary" type="button" title="Abrir formulario">
+      ☰
+    </button>
+  </div>
+
+  <aside id="panelOperador" class="operador-bottomsheet">
+    <div class="sheet-handle"></div>
+
+    <section class="sheet-card">
+      <h3>Sesión</h3>
+      <div id="userName" class="user-badge-inline">Usuario</div>
+
+      <div class="sheet-actions">
+        <button id="changePasswordBtn" class="btn-secondary" type="button">Cambiar contraseña</button>
+        <button id="logoutBtn" class="btn-danger" type="button">Cerrar sesión</button>
       </div>
-      <div id="mapOperador"></div>
     </section>
 
-    <aside id="panelOperador" class="operador-panel">
-      <div class="panel-card">
-        <h2>Categorías</h2>
-        <div class="grid-categorias">
-          <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
-          <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
-          <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
-          <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
-          <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
-          <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
+    <section class="sheet-card">
+      <h3>Categorías</h3>
+      <div class="grid-categorias compact">
+        <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
+        <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
+        <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
+        <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
+        <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
+        <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
+      </div>
+    </section>
+
+    <section class="sheet-card">
+      <h3>Registrar incidencia</h3>
+
+      <form id="registroForm" class="registro-form">
+        <div class="form-group">
+          <label for="categoria">Categoría</label>
+          <input type="text" id="categoria" readonly placeholder="Seleccione una categoría" required />
         </div>
-      </div>
 
-      <div class="panel-card">
-        <h2>Registrar incidencia</h2>
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea id="descripcion" rows="4" placeholder="Detalle de la incidencia..." required></textarea>
+        </div>
 
-        <form id="registroForm" class="registro-form">
-          <div class="form-group">
-            <label for="categoria">Categoría</label>
-            <input type="text" id="categoria" readonly placeholder="Seleccione una categoría" required />
-          </div>
+        <input type="hidden" id="latitud" />
+        <input type="hidden" id="longitud" />
 
-          <div class="form-group">
-            <label for="descripcion">Descripción</label>
-            <textarea id="descripcion" rows="4" placeholder="Detalle de la incidencia..." required></textarea>
-          </div>
+        <div class="form-group">
+          <label for="direccion">Dirección / referencia</label>
+          <input type="text" id="direccion" placeholder="Ej: Av. Principal con Pasaje 4" />
+        </div>
 
-          <input type="hidden" id="latitud" />
-          <input type="hidden" id="longitud" />
+        <p class="helper-text">
+          Obtén la ubicación y luego ajusta el punto en el mapa si es necesario.
+        </p>
 
-          <div class="form-group">
-            <label for="direccion">Dirección / referencia</label>
-            <input type="text" id="direccion" placeholder="Ej: Av. Principal con Pasaje 4" />
-          </div>
+        <div class="form-actions">
+          <button type="button" id="btnUbicacion" class="btn-secondary">Obtener ubicación</button>
+          <button type="submit" class="btn-primary">Guardar registro</button>
+        </div>
 
-          <p class="helper-text">
-            Usa <strong>Obtener ubicación</strong> para capturar el punto GPS y luego ajustarlo en el mapa si hace falta.
-          </p>
-
-          <div class="form-actions">
-            <button type="button" id="btnUbicacion" class="btn-secondary">Obtener ubicación</button>
-            <button type="submit" class="btn-primary">Guardar registro</button>
-          </div>
-
-          <p id="registroMessage" class="form-message"></p>
-        </form>
-      </div>
-    </aside>
-  </main>
+        <p id="registroMessage" class="form-message"></p>
+      </form>
+    </section>
+  </aside>
 
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
