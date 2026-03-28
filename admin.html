@@ -32,93 +32,114 @@
     </div>
   </header>
 
-  <main class="layout-admin">
-    <section class="stats-grid">
-      <article class="stat-card">
-        <h3>Total incidencias</h3>
-        <p id="statTotal">0</p>
-      </article>
-      <article class="stat-card">
-        <h3>Hoy</h3>
-        <p id="statHoy">0</p>
-      </article>
-      <article class="stat-card">
-        <h3>Pendientes</h3>
-        <p id="statPendientes">0</p>
-      </article>
-      <article class="stat-card">
-        <h3>Resueltas</h3>
-        <p id="statResueltas">0</p>
-      </article>
-    </section>
+  <main class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="sidebar-block">
+        <h3>Resumen</h3>
 
-    <section class="panel-card">
-      <div class="toolbar">
-        <div class="toolbar-filters">
-          <select id="filtroCategoria">
-            <option value="">Todas las categorías</option>
-            <option value="Alumbrado">Alumbrado</option>
-            <option value="Basura">Basura</option>
-            <option value="Seguridad">Seguridad</option>
-            <option value="Áreas Verdes">Áreas Verdes</option>
-            <option value="Zoonosis">Zoonosis</option>
-            <option value="Infraestructura">Infraestructura</option>
-          </select>
-
-          <select id="filtroEstado">
-            <option value="">Todos los estados</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="en_proceso">En proceso</option>
-            <option value="resuelto">Resuelto</option>
-          </select>
-
-          <button id="btnLimpiarFiltros" class="btn-secondary">Limpiar filtros</button>
+        <div class="sidebar-stats">
+          <div class="sidebar-stat">
+            <span>Total</span>
+            <strong id="statTotal">0</strong>
+          </div>
+          <div class="sidebar-stat">
+            <span>Hoy</span>
+            <strong id="statHoy">0</strong>
+          </div>
+          <div class="sidebar-stat">
+            <span>Pendientes</span>
+            <strong id="statPendientes">0</strong>
+          </div>
+          <div class="sidebar-stat">
+            <span>Resueltas</span>
+            <strong id="statResueltas">0</strong>
+          </div>
         </div>
+      </div>
 
-        <div class="toolbar-actions">
+      <div class="sidebar-block">
+        <h3>Filtros</h3>
+
+        <select id="filtroCategoria">
+          <option value="">Todas las categorías</option>
+          <option value="Alumbrado">Alumbrado</option>
+          <option value="Basura">Basura</option>
+          <option value="Seguridad">Seguridad</option>
+          <option value="Áreas Verdes">Áreas Verdes</option>
+          <option value="Zoonosis">Zoonosis</option>
+          <option value="Infraestructura">Infraestructura</option>
+        </select>
+
+        <select id="filtroEstado">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="resuelto">Resuelto</option>
+        </select>
+
+        <label class="map-toggle">
+          <input type="checkbox" id="toggleResueltos">
+          Mostrar resueltas en mapa
+        </label>
+
+        <label class="map-toggle">
+          <input type="checkbox" id="toggleHeatmap">
+          Mostrar mapa de calor
+        </label>
+
+        <div class="sidebar-actions">
+          <button id="btnLimpiarFiltros" class="btn-secondary">Limpiar filtros</button>
           <button id="btnExportarCSV" class="btn-primary">Exportar CSV</button>
         </div>
       </div>
-    </section>
 
-    <section class="panel-card panel-map">
-      <h2>Mapa general</h2>
+      <div class="sidebar-block">
+        <h3>Vista</h3>
 
-      <div class="map-controls">
-        <label class="map-toggle">
-          <input type="checkbox" id="toggleResueltos">
-          Mostrar incidencias resueltas
-        </label>
-
-       <label class="map-toggle">
-         <input type="checkbox" id="toggleHeatmap">
-         Mostrar mapa de calor
-       </label>
-     </div>
-      
-      <div id="mapAdmin"></div>
-    </section>
-
-    <section class="panel-card">
-      <h2>Listado de incidencias</h2>
-
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Categoría</th>
-              <th>Descripción</th>
-              <th>Dirección</th>
-              <th>Estado</th>
-              <th>Fecha</th>
-              <th>Usuario</th>
-              <th>Mapa</th>
-              <th>Fotos</th>
-            </tr>
-          </thead>
-          <tbody id="tablaIncidenciasBody"></tbody>
-        </table>
+        <div class="view-switch">
+          <button id="btnVistaMapa" class="btn-primary">Mapa</button>
+          <button id="btnVistaListado" class="btn-secondary">Incidencias</button>
+        </div>
       </div>
+    </aside>
+
+    <section class="admin-main">
+      <section id="vistaMapa" class="admin-view active">
+        <div class="map-toolbar">
+          <h2>Mapa táctico</h2>
+
+          <div class="map-base-switch">
+            <button id="btnMapaBase" class="btn-secondary">Mapa</button>
+            <button id="btnMapaSatelital" class="btn-secondary">Satelital</button>
+          </div>
+        </div>
+
+        <div id="mapAdmin"></div>
+      </section>
+
+      <section id="vistaListado" class="admin-view">
+        <div class="list-toolbar">
+          <h2>Listado de incidencias</h2>
+          <button id="btnVolverMapa" class="btn-secondary">Volver al mapa</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Descripción</th>
+                <th>Dirección</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Mapa</th>
+              </tr>
+            </thead>
+            <tbody id="tablaIncidenciasBody"></tbody>
+          </table>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -130,7 +151,7 @@
   <script
     src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"
     crossorigin=""
-></script>
-<script type="module" src="./js/admin.js"></script>
+  ></script>
+  <script type="module" src="./js/admin.js"></script>
 </body>
 </html>
