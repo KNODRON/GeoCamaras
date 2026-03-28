@@ -13,7 +13,10 @@ import {
 const logoutBtn = document.getElementById("logoutBtn");
 const changePasswordBtn = document.getElementById("changePasswordBtn");
 const userName = document.getElementById("userName");
+
 const togglePanelOperador = document.getElementById("togglePanelOperador");
+const btnPanelFloating = document.getElementById("btnPanelFloating");
+const btnUbicacionFloating = document.getElementById("btnUbicacionFloating");
 const panelOperador = document.getElementById("panelOperador");
 
 const categoriaInput = document.getElementById("categoria");
@@ -59,15 +62,22 @@ changePasswordBtn.addEventListener("click", async () => {
   }
 });
 
-togglePanelOperador.addEventListener("click", () => {
+togglePanelOperador.addEventListener("click", togglePanel);
+btnPanelFloating.addEventListener("click", togglePanel);
+
+function togglePanel() {
   panelOperador.classList.toggle("open");
-  setTimeout(() => map.invalidateSize(), 150);
-});
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 200);
+}
 
 function initMap() {
+  const esMovil = window.matchMedia("(max-width: 1024px)").matches;
+
   map = L.map("mapOperador", {
-    gestureHandling: true,
-    scrollWheelZoom: false
+    gestureHandling: !esMovil,
+    scrollWheelZoom: esMovil
   }).setView([-33.45694, -70.64827], 13);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -75,17 +85,19 @@ function initMap() {
     attribution: "&copy; OpenStreetMap contributors"
   }).addTo(map);
 
-  map.getContainer().addEventListener(
-    "wheel",
-    (e) => {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        if (e.deltaY < 0) map.zoomIn();
-        else map.zoomOut();
-      }
-    },
-    { passive: false }
-  );
+  if (!esMovil) {
+    map.getContainer().addEventListener(
+      "wheel",
+      (e) => {
+        if (e.ctrlKey) {
+          e.preventDefault();
+          if (e.deltaY < 0) map.zoomIn();
+          else map.zoomOut();
+        }
+      },
+      { passive: false }
+    );
+  }
 
   map.on("click", (e) => {
     if (!ubicacionInicialCapturada) {
@@ -106,6 +118,12 @@ function bindCategoriaButtons() {
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       categoriaInput.value = btn.dataset.categoria;
+
+      if (window.matchMedia("(max-width: 1024px)").matches) {
+        setTimeout(() => {
+          panelOperador.scrollTo({ top: panelOperador.scrollHeight, behavior: "smooth" });
+        }, 100);
+      }
     });
   });
 }
@@ -127,7 +145,7 @@ function setLocation(lat, lng, message = "") {
   }
 }
 
-btnUbicacion.addEventListener("click", () => {
+function obtenerUbicacion() {
   if (!navigator.geolocation) {
     registroMessage.textContent = "Tu navegador no soporta geolocalización.";
     return;
@@ -152,7 +170,10 @@ btnUbicacion.addEventListener("click", () => {
       maximumAge: 0
     }
   );
-});
+}
+
+btnUbicacion.addEventListener("click", obtenerUbicacion);
+btnUbicacionFloating.addEventListener("click", obtenerUbicacion);
 
 registroForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -212,6 +233,10 @@ registroForm.addEventListener("submit", async (e) => {
     }
 
     map.setView([-33.45694, -70.64827], 13);
+
+    if (window.matchMedia("(max-width: 1024px)").matches) {
+      panelOperador.classList.remove("open");
+    }
   } catch (error) {
     console.error(error);
     registroMessage.textContent = "Error al guardar la incidencia.";
