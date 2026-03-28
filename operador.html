@@ -42,29 +42,7 @@
   <aside id="panelOperador" class="operador-bottomsheet">
     <div class="sheet-handle"></div>
 
-    <section class="sheet-card">
-      <h3>Sesión</h3>
-      <div id="userName" class="user-badge-inline">Usuario</div>
-
-      <div class="sheet-actions">
-        <button id="changePasswordBtn" class="btn-secondary" type="button">Cambiar contraseña</button>
-        <button id="logoutBtn" class="btn-danger" type="button">Cerrar sesión</button>
-      </div>
-    </section>
-
-    <section class="sheet-card">
-      <h3>Categorías</h3>
-      <div class="grid-categorias compact">
-        <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
-        <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
-        <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
-        <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
-        <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
-        <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
-      </div>
-    </section>
-
-    <section class="sheet-card">
+    <section class="sheet-card form-first">
       <h3>Registrar incidencia</h3>
 
       <form id="registroForm" class="registro-form">
@@ -97,6 +75,32 @@
 
         <p id="registroMessage" class="form-message"></p>
       </form>
+    </section>
+
+    <section class="sheet-card">
+      <h3>Categorías</h3>
+      <div class="grid-categorias compact">
+        <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
+        <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
+        <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
+        <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
+        <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
+        <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
+      </div>
+    </section>
+
+    <section class="sheet-card session-card">
+      <div class="session-inline">
+        <div>
+          <h4>Sesión</h4>
+          <div id="userName" class="user-badge-inline">Usuario</div>
+        </div>
+
+        <div class="session-inline-actions">
+          <button id="changePasswordBtn" class="btn-secondary btn-small" type="button">Clave</button>
+          <button id="logoutBtn" class="btn-danger btn-small" type="button">Salir</button>
+        </div>
+      </div>
     </section>
   </aside>
 
