@@ -77,3 +77,25 @@ loginForm.addEventListener("submit", async (e) => {
     loginMessage.textContent = "Correo o contraseña incorrectos.";
   }
 });
+
+  import { getAuth, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const auth = getAuth();
+
+window.login = async function () {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const errorDiv = document.getElementById("error");
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+
+    // redirige al sistema
+    window.location.href = "index.html";
+
+  } catch (error) {
+    errorDiv.textContent = "Credenciales incorrectas";
+    console.error(error);
+  }
+};
