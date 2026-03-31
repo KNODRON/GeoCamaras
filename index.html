@@ -3,41 +3,1075 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GeoRegistro | Acceso</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
+  <title>GeoRegistro - Control Territorial Municipal</title>
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    :root {
+      --bg: #f3f6f8;
+      --card: #ffffff;
+      --line: #d9e1e7;
+      --text: #1f2a33;
+      --muted: #667784;
+      --primary: #0b5d52;
+      --primary-2: #0f7669;
+      --danger: #c62828;
+      --warn: #ef6c00;
+      --medium: #f9a825;
+      --ok: #2e7d32;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: 72px 86px 1fr 220px;
+      height: 100vh;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+      color: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.15);
+      display: grid;
+      place-items: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .pill {
+      background: rgba(255,255,255,0.14);
+      padding: 8px 12px;
+      border-radius: 999px;
+    }
+
+    .filters {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1.3fr repeat(5, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+    }
+
+    .btn {
+      height: 38px;
+      border: none;
+      border-radius: 10px;
+      padding: 0 14px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 290px 1fr 300px;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .panel,
+    .map-card,
+    .bottom-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header,
+    .map-header,
+    .bottom-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header h3,
+    .map-header h3,
+    .bottom-header h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .panel-body {
+      padding: 12px;
+      overflow: auto;
+      height: calc(100% - 50px);
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fbfcfd;
+    }
+
+    .kpi .value {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .kpi .label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--muted);
+      margin: 14px 0 8px;
+      text-transform: uppercase;
+    }
+
+    .ranking-item,
+    .activity-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+
+    .ranking-item strong,
+    .activity-item strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 999px;
+      padding: 5px 8px;
+      margin-top: 8px;
+      color: white;
+    }
+
+    .critical { background: var(--danger); }
+    .high { background: var(--warn); }
+    .medium { background: var(--medium); color: #222; }
+    .low { background: var(--ok); }
+
+    .map-card {
+      display: grid;
+      grid-template-rows: 50px 1fr;
+      min-height: 0;
+      position: relative;
+    }
+
+    .map-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layer-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .layer-btn {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .layer-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .map-area {
+      position: relative;
+      min-height: 0;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-overlay-label {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 600;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .map-legend {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      z-index: 600;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .legend-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .right-detail {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detail-body {
+      padding: 12px;
+      overflow: auto;
+      height: calc(100% - 50px);
+    }
+
+    .detail-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .detail-card h4 {
+      margin: 0 0 10px;
+      font-size: 14px;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .detail-list div {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px dashed #e6edf2;
+      padding-bottom: 6px;
+    }
+
+    .bottom-card {
+      display: grid;
+      grid-template-rows: 50px 1fr;
+      min-height: 0;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f8fbfc;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      position: sticky;
+      top: 0;
+    }
+
+    .leaflet-popup-content {
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 1200px) {
+      .main {
+        grid-template-columns: 280px 1fr;
+      }
+
+      .right-detail {
+        display: none;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-rows: auto auto auto auto;
+        height: auto;
+      }
+
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .panel,
+      .map-card,
+      .bottom-card {
+        min-height: 380px;
+      }
+
+      .map-card {
+        min-height: 520px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px;
+      }
+
+      .topbar-right {
+        flex-wrap: wrap;
+      }
+
+      .kpis {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
-<body class="auth-body">
-  <main class="auth-container">
-    <section class="auth-card">
-      <div class="brand-block">
-        <div class="brand-icon">GR</div>
-        <h1>GeoRegistro</h1>
-        <p>Plataforma de registro territorial municipal</p>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo">GR</div>
+        <div class="brand">
+          <h1>GeoRegistro</h1>
+          <p>Plataforma de prevención y control territorial municipal</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="pill">Comuna: Demo</div>
+        <div class="pill">Rol: Supervisor</div>
+        <div class="pill">Usuario: Juan</div>
+      </div>
+    </header>
+
+    <section class="filters">
+      <div class="field">
+        <label>Buscar</label>
+        <input type="text" placeholder="Dirección, folio, patente, inspector..." />
       </div>
 
-      <form id="loginForm" class="auth-form">
-        <label for="email">Correo</label>
-        <input type="email" id="email" placeholder="correo@ejemplo.cl" required />
+      <div class="field">
+        <label>Período</label>
+        <select>
+          <option>Últimos 7 días</option>
+          <option>Últimos 30 días</option>
+          <option>Este mes</option>
+          <option>Personalizado</option>
+        </select>
+      </div>
 
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" placeholder="********" required />
+      <div class="field">
+        <label>Categoría</label>
+        <select>
+          <option>Todas</option>
+          <option>Incivilidades</option>
+          <option>Riesgo urbano</option>
+          <option>Comercio irregular</option>
+          <option>Vehículos</option>
+        </select>
+      </div>
 
-        <button type="submit" class="btn-primary">Ingresar</button>
-        <p id="loginMessage" class="form-message"></p>
-      </form>
+      <div class="field">
+        <label>Estado</label>
+        <select>
+          <option>Todos</option>
+          <option>Pendiente</option>
+          <option>En gestión</option>
+          <option>Resuelto</option>
+          <option>Escalado</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Sector</label>
+        <select>
+          <option>Todos</option>
+          <option>Centro</option>
+          <option>Norte</option>
+          <option>Sur</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Inspector</label>
+        <select>
+          <option>Todos</option>
+          <option>Pérez</option>
+          <option>Soto</option>
+          <option>Muñoz</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary">Aplicar filtros</button>
     </section>
-  </main>
 
-  <script type="module" src="./js/auth.js"></script>
+    <main class="main">
+      <aside class="panel">
+        <div class="panel-header">
+          <h3>Panel Operativo</h3>
+          <span class="meta">Actualizado: hoy</span>
+        </div>
+        <div class="panel-body">
+          <div class="kpis">
+            <div class="kpi">
+              <div class="value">34</div>
+              <div class="label">Incidencias hoy</div>
+            </div>
+            <div class="kpi">
+              <div class="value">12</div>
+              <div class="label">Pendientes</div>
+            </div>
+            <div class="kpi">
+              <div class="value">5</div>
+              <div class="label">Sectores críticos</div>
+            </div>
+            <div class="kpi">
+              <div class="value">8</div>
+              <div class="label">Con evidencia</div>
+            </div>
+          </div>
+
+          <div class="section-title">Top zonas críticas</div>
+
+          <div class="ranking-item">
+            <strong>Plaza Central</strong>
+            <div class="meta">Índice: 87 | 12 incidencias | 19:00–23:00</div>
+            <span class="badge critical">MUY CRÍTICO</span>
+          </div>
+
+          <div class="ranking-item">
+            <strong>Feria Norte</strong>
+            <div class="meta">Índice: 69 | 9 incidencias | 17:00–21:00</div>
+            <span class="badge high">CRÍTICO</span>
+          </div>
+
+          <div class="ranking-item">
+            <strong>Av. Los Pinos</strong>
+            <div class="meta">Índice: 48 | 7 incidencias | 18:00–22:00</div>
+            <span class="badge medium">ALTO</span>
+          </div>
+
+          <div class="section-title">Actividad reciente</div>
+
+          <div class="activity-item">
+            <strong>#184 - Comercio irregular</strong>
+            <div class="meta">Centro · Inspector Pérez · Pendiente</div>
+          </div>
+
+          <div class="activity-item">
+            <strong>#185 - Vehículo abandonado</strong>
+            <div class="meta">Norte · Inspector Soto · En gestión</div>
+          </div>
+
+          <div class="activity-item">
+            <strong>#186 - Luminaria apagada</strong>
+            <div class="meta">Sur · Inspector Muñoz · Resuelto</div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="map-card">
+        <div class="map-header">
+          <div class="map-header-left">
+            <h3>Mapa Multicriterio</h3>
+          </div>
+          <div class="layer-btns">
+            <button class="layer-btn active" data-layer="multicriterio">Multicriterio</button>
+            <button class="layer-btn" data-layer="marcadores">Marcadores</button>
+            <button class="layer-btn" data-layer="ambos">Ambos</button>
+          </div>
+        </div>
+
+        <div class="map-area">
+          <div class="map-overlay-label">
+            Vista territorial · Modo supervisor · Demo Leaflet
+          </div>
+
+          <div class="map-legend">
+            <div class="legend-row">
+              <div class="legend-color" style="background:#66bb6a;"></div>
+              <span>Bajo</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-color" style="background:#fdd835;"></div>
+              <span>Medio</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-color" style="background:#fb8c00;"></div>
+              <span>Alto</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-color" style="background:#e53935;"></div>
+              <span>Crítico</span>
+            </div>
+          </div>
+
+          <div id="map"></div>
+        </div>
+      </section>
+
+      <aside class="panel right-detail">
+        <div class="panel-header">
+          <h3>Detalle del Sector</h3>
+          <span id="detailBadge" class="badge critical">MUY CRÍTICO</span>
+        </div>
+        <div class="detail-body" id="detailBody">
+          <div class="detail-card">
+            <h4>Plaza Central</h4>
+            <div class="detail-list">
+              <div><span>Índice territorial</span><strong>87</strong></div>
+              <div><span>Incidencias</span><strong>12</strong></div>
+              <div><span>Casos pendientes</span><strong>4</strong></div>
+              <div><span>Horario crítico</span><strong>19:00–23:00</strong></div>
+              <div><span>Último inspector</span><strong>Pérez</strong></div>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h4>Categorías dominantes</h4>
+            <div class="detail-list">
+              <div><span>Comercio irregular</span><strong>4</strong></div>
+              <div><span>Consumo alcohol/drogas</span><strong>3</strong></div>
+              <div><span>Ruidos molestos</span><strong>2</strong></div>
+              <div><span>Vehículos abandonados</span><strong>2</strong></div>
+              <div><span>Daño mobiliario</span><strong>1</strong></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <section class="bottom-card">
+      <div class="bottom-header">
+        <h3>Listado resumido de incidencias</h3>
+        <span class="meta">Vista rápida para supervisión</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Tipo</th>
+              <th>Sector</th>
+              <th>Inspector</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Índice sector</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#184</td>
+              <td>Comercio irregular</td>
+              <td>Plaza Central</td>
+              <td>Pérez</td>
+              <td>Pendiente</td>
+              <td>31-03-2026 18:42</td>
+              <td>87</td>
+            </tr>
+            <tr>
+              <td>#185</td>
+              <td>Vehículo abandonado</td>
+              <td>Feria Norte</td>
+              <td>Soto</td>
+              <td>En gestión</td>
+              <td>31-03-2026 17:11</td>
+              <td>69</td>
+            </tr>
+            <tr>
+              <td>#186</td>
+              <td>Luminaria apagada</td>
+              <td>Av. Los Pinos</td>
+              <td>Muñoz</td>
+              <td>Resuelto</td>
+              <td>31-03-2026 15:06</td>
+              <td>48</td>
+            </tr>
+            <tr>
+              <td>#187</td>
+              <td>Ruidos molestos</td>
+              <td>Plaza Central</td>
+              <td>Pérez</td>
+              <td>Pendiente</td>
+              <td>31-03-2026 20:03</td>
+              <td>87</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
 
   <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js")
-    .then(() => console.log("Service Worker registrado"))
-    .catch(err => console.error("Error SW:", err));
-}
-</script>
+    // =========================
+    // DATOS DEMO
+    // =========================
+    const sectores = [
+      {
+        id: "s1",
+        nombre: "Plaza Central",
+        nivel: "critical",
+        indice: 87,
+        incidencias: 12,
+        pendientes: 4,
+        horario: "19:00–23:00",
+        inspector: "Pérez",
+        categorias: [
+          ["Comercio irregular", 4],
+          ["Consumo alcohol/drogas", 3],
+          ["Ruidos molestos", 2],
+          ["Vehículos abandonados", 2],
+          ["Daño mobiliario", 1]
+        ],
+        polygon: [
+          [-33.4489, -70.6624],
+          [-33.4489, -70.6598],
+          [-33.4512, -70.6598],
+          [-33.4512, -70.6624]
+        ]
+      },
+      {
+        id: "s2",
+        nombre: "Feria Norte",
+        nivel: "high",
+        indice: 69,
+        incidencias: 9,
+        pendientes: 3,
+        horario: "17:00–21:00",
+        inspector: "Soto",
+        categorias: [
+          ["Comercio irregular", 3],
+          ["Vehículos abandonados", 2],
+          ["Riñas", 2],
+          ["Ruidos molestos", 1],
+          ["Microbasural", 1]
+        ],
+        polygon: [
+          [-33.4468, -70.6598],
+          [-33.4468, -70.6572],
+          [-33.4490, -70.6572],
+          [-33.4490, -70.6598]
+        ]
+      },
+      {
+        id: "s3",
+        nombre: "Av. Los Pinos",
+        nivel: "medium",
+        indice: 48,
+        incidencias: 7,
+        pendientes: 2,
+        horario: "18:00–22:00",
+        inspector: "Muñoz",
+        categorias: [
+          ["Luminaria apagada", 3],
+          ["Vehículos abandonados", 2],
+          ["Daño mobiliario", 1],
+          ["Ruidos molestos", 1]
+        ],
+        polygon: [
+          [-33.4512, -70.6598],
+          [-33.4512, -70.6572],
+          [-33.4533, -70.6572],
+          [-33.4533, -70.6598]
+        ]
+      },
+      {
+        id: "s4",
+        nombre: "Barrio Sur",
+        nivel: "low",
+        indice: 18,
+        incidencias: 3,
+        pendientes: 1,
+        horario: "15:00–18:00",
+        inspector: "Rojas",
+        categorias: [
+          ["Microbasural", 1],
+          ["Luminaria apagada", 1],
+          ["Ruido molesto", 1]
+        ],
+        polygon: [
+          [-33.4512, -70.6624],
+          [-33.4512, -70.6598],
+          [-33.4533, -70.6598],
+          [-33.4533, -70.6624]
+        ]
+      }
+    ];
+
+    const incidencias = [
+      {
+        id: 184,
+        tipo: "Comercio irregular",
+        sector: "Plaza Central",
+        estado: "Pendiente",
+        inspector: "Pérez",
+        fecha: "31-03-2026 18:42",
+        lat: -33.4501,
+        lng: -70.6611
+      },
+      {
+        id: 185,
+        tipo: "Vehículo abandonado",
+        sector: "Feria Norte",
+        estado: "En gestión",
+        inspector: "Soto",
+        fecha: "31-03-2026 17:11",
+        lat: -33.4479,
+        lng: -70.6583
+      },
+      {
+        id: 186,
+        tipo: "Luminaria apagada",
+        sector: "Av. Los Pinos",
+        estado: "Resuelto",
+        inspector: "Muñoz",
+        fecha: "31-03-2026 15:06",
+        lat: -33.4523,
+        lng: -70.6584
+      },
+      {
+        id: 187,
+        tipo: "Ruidos molestos",
+        sector: "Plaza Central",
+        estado: "Pendiente",
+        inspector: "Pérez",
+        fecha: "31-03-2026 20:03",
+        lat: -33.4498,
+        lng: -70.6602
+      }
+    ];
+
+    // =========================
+    // MAPA
+    // =========================
+    const map = L.map("map", {
+      zoomControl: true
+    }).setView([-33.4498, -70.6597], 16);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap"
+    }).addTo(map);
+
+    const multicriterioLayer = L.layerGroup().addTo(map);
+    const marcadoresLayer = L.layerGroup().addTo(map);
+
+    function getSectorColor(nivel) {
+      switch (nivel) {
+        case "critical": return "#e53935";
+        case "high": return "#fb8c00";
+        case "medium": return "#fdd835";
+        case "low": return "#66bb6a";
+        default: return "#90a4ae";
+      }
+    }
+
+    function getBadgeClass(nivel) {
+      switch (nivel) {
+        case "critical": return "critical";
+        case "high": return "high";
+        case "medium": return "medium";
+        case "low": return "low";
+        default: return "low";
+      }
+    }
+
+    function getBadgeText(nivel) {
+      switch (nivel) {
+        case "critical": return "MUY CRÍTICO";
+        case "high": return "CRÍTICO";
+        case "medium": return "ALTO";
+        case "low": return "BAJO";
+        default: return "SIN DATO";
+      }
+    }
+
+    function renderSectorDetail(sector) {
+      const badge = document.getElementById("detailBadge");
+      const body = document.getElementById("detailBody");
+
+      badge.className = `badge ${getBadgeClass(sector.nivel)}`;
+      badge.textContent = getBadgeText(sector.nivel);
+
+      const categoriasHtml = sector.categorias.map(cat => {
+        return `<div><span>${cat[0]}</span><strong>${cat[1]}</strong></div>`;
+      }).join("");
+
+      body.innerHTML = `
+        <div class="detail-card">
+          <h4>${sector.nombre}</h4>
+          <div class="detail-list">
+            <div><span>Índice territorial</span><strong>${sector.indice}</strong></div>
+            <div><span>Incidencias</span><strong>${sector.incidencias}</strong></div>
+            <div><span>Casos pendientes</span><strong>${sector.pendientes}</strong></div>
+            <div><span>Horario crítico</span><strong>${sector.horario}</strong></div>
+            <div><span>Último inspector</span><strong>${sector.inspector}</strong></div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <h4>Categorías dominantes</h4>
+          <div class="detail-list">
+            ${categoriasHtml}
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <h4>Acciones sugeridas</h4>
+          <div class="meta">
+            - Reforzar presencia en horario crítico<br>
+            - Revisar reincidencia del sector<br>
+            - Coordinar fiscalización focalizada<br>
+            - Levantar evidencia complementaria
+          </div>
+        </div>
+      `;
+    }
+
+    // Dibujar sectores multicriterio
+    sectores.forEach(sector => {
+      const polygon = L.polygon(sector.polygon, {
+        color: "#ffffff",
+        weight: 1,
+        fillColor: getSectorColor(sector.nivel),
+        fillOpacity: 0.5
+      });
+
+      polygon.bindPopup(`
+        <strong>${sector.nombre}</strong><br>
+        Índice: ${sector.indice}<br>
+        Incidencias: ${sector.incidencias}<br>
+        Pendientes: ${sector.pendientes}
+      `);
+
+      polygon.on("click", () => renderSectorDetail(sector));
+      polygon.addTo(multicriterioLayer);
+    });
+
+    // Dibujar incidencias
+    incidencias.forEach(inc => {
+      const marker = L.circleMarker([inc.lat, inc.lng], {
+        radius: 7,
+        color: "#ffffff",
+        weight: 2,
+        fillColor: "#0b5d52",
+        fillOpacity: 1
+      });
+
+      marker.bindPopup(`
+        <strong>#${inc.id} - ${inc.tipo}</strong><br>
+        Sector: ${inc.sector}<br>
+        Inspector: ${inc.inspector}<br>
+        Estado: ${inc.estado}<br>
+        Fecha: ${inc.fecha}
+      `);
+
+      marker.addTo(marcadoresLayer);
+    });
+
+    // Ajustar vista al conjunto
+    const allCoords = [];
+    sectores.forEach(s => s.polygon.forEach(p => allCoords.push(p)));
+    map.fitBounds(allCoords, { padding: [20, 20] });
+
+    // Detalle inicial
+    renderSectorDetail(sectores[0]);
+
+    // =========================
+    // CAPAS
+    // =========================
+    const layerButtons = document.querySelectorAll(".layer-btn");
+
+    function setLayerMode(mode) {
+      layerButtons.forEach(b => b.classList.remove("active"));
+      document.querySelector(`[data-layer="${mode}"]`)?.classList.add("active");
+
+      map.removeLayer(multicriterioLayer);
+      map.removeLayer(marcadoresLayer);
+
+      if (mode === "multicriterio") {
+        multicriterioLayer.addTo(map);
+      } else if (mode === "marcadores") {
+        marcadoresLayer.addTo(map);
+      } else if (mode === "ambos") {
+        multicriterioLayer.addTo(map);
+        marcadoresLayer.addTo(map);
+      }
+    }
+
+    layerButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.layer;
+        setLayerMode(mode);
+      });
+    });
+
+    setLayerMode("multicriterio");
+  </script>
 </body>
 </html>
