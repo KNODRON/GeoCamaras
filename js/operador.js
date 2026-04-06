@@ -21,6 +21,7 @@ const panelOperador = document.getElementById("panelOperador");
 
 const categoriaInput = document.getElementById("categoria");
 const descripcionInput = document.getElementById("descripcion");
+const estadoRegistro = document.getElementById("estadoRegistro");
 const latitudInput = document.getElementById("latitud");
 const longitudInput = document.getElementById("longitud");
 const direccionInput = document.getElementById("direccion");
@@ -33,6 +34,7 @@ let marker;
 let currentUser = null;
 let currentProfile = null;
 let ubicacionInicialCapturada = false;
+let panelInicializado = false;
 
 requireRole("operador", async (user, profile) => {
   currentUser = user;
@@ -40,11 +42,12 @@ requireRole("operador", async (user, profile) => {
   userName.textContent = `${profile.nombre || user.email} · ${profile.rol}`;
   initMap();
   bindCategoriaButtons();
+  bindBottomSheet();
 });
 
 logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
-  window.location.href = "./index.html";
+  window.location.href = "./login.html";
 });
 
 changePasswordBtn.addEventListener("click", async () => {
@@ -67,14 +70,51 @@ btnPanelFloating.addEventListener("click", togglePanel);
 
 function togglePanel() {
   panelOperador.classList.toggle("open");
-
-  if (panelOperador.classList.contains("open")) {
-    panelOperador.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
   setTimeout(() => {
     if (map) map.invalidateSize();
-  }, 250);
+  }, 280);
+}
+
+function openPanel() {
+  panelOperador.classList.add("open");
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 280);
+}
+
+function closePanel() {
+  panelOperador.classList.remove("open");
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 280);
+}
+
+function bindBottomSheet() {
+  if (panelInicializado) return;
+  panelInicializado = true;
+
+  let startY = 0;
+  let endY = 0;
+
+  const handle = panelOperador.querySelector(".sheet-handle");
+
+  const onStart = (clientY) => {
+    startY = clientY;
+  };
+
+  const onEnd = (clientY) => {
+    endY = clientY;
+    const diff = endY - startY;
+
+    if (diff > 60) {
+      closePanel();
+    } else if (diff < -40) {
+      openPanel();
+    }
+  };
+
+  handle.addEventListener("touchstart", (e) => onStart(e.touches[0].clientY), { passive: true });
+  handle.addEventListener("touchend", (e) => onEnd(e.changedTouches[0].clientY), { passive: true });
 }
 
 function initMap() {
@@ -83,7 +123,7 @@ function initMap() {
   map = L.map("mapOperador", {
     gestureHandling: !esMovil,
     scrollWheelZoom: esMovil,
-    zoomControl: true
+    zoomControl: false
   }).setView([-33.45694, -70.64827], 13);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -92,17 +132,7 @@ function initMap() {
   }).addTo(map);
 
   if (!esMovil) {
-    map.getContainer().addEventListener(
-      "wheel",
-      (e) => {
-        if (e.ctrlKey) {
-          e.preventDefault();
-          if (e.deltaY < 0) map.zoomIn();
-          else map.zoomOut();
-        }
-      },
-      { passive: false }
-    );
+    L.control.zoom({ position: "bottomright" }).addTo(map);
   }
 
   map.on("click", (e) => {
@@ -126,6 +156,7 @@ function bindCategoriaButtons() {
       buttons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       categoriaInput.value = btn.dataset.categoria;
+      openPanel();
     });
   });
 }
@@ -135,7 +166,14 @@ function setLocation(lat, lng, message = "") {
   longitudInput.value = Number(lng).toFixed(6);
 
   if (!marker) {
-    marker = L.marker([lat, lng]).addTo(map);
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+    marker.on("dragend", (e) => {
+      const pos = e.target.getLatLng();
+      latitudInput.value = Number(pos.lat).toFixed(6);
+      longitudInput.value = Number(pos.lng).toFixed(6);
+      registroMessage.textContent = "Ubicación ajustada manualmente en el mapa.";
+    });
   } else {
     marker.setLatLng([lat, lng]);
   }
@@ -160,7 +198,12 @@ function obtenerUbicacion() {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
       ubicacionInicialCapturada = true;
-      setLocation(lat, lng, "Ubicación obtenida correctamente. Ahora puedes ajustar el punto en el mapa si es necesario.");
+      setLocation(
+        lat,
+        lng,
+        "Ubicación obtenida correctamente. Ahora puedes ajustar el punto en el mapa si es necesario."
+      );
+      openPanel();
     },
     (error) => {
       console.error(error);
@@ -182,13 +225,14 @@ registroForm.addEventListener("submit", async (e) => {
 
   const categoria = categoriaInput.value.trim();
   const descripcion = descripcionInput.value.trim();
+  const estado = estadoRegistro.value;
   const direccion = direccionInput.value.trim();
 
   const lat = parseFloat(String(latitudInput.value).replace(",", "."));
   const lng = parseFloat(String(longitudInput.value).replace(",", "."));
 
-  if (!categoria || !descripcion || Number.isNaN(lat) || Number.isNaN(lng)) {
-    registroMessage.textContent = "Completa categoría, descripción y captura la ubicación.";
+  if (!categoria || !descripcion || !estado || Number.isNaN(lat) || Number.isNaN(lng)) {
+    registroMessage.textContent = "Completa categoría, descripción, estado y captura la ubicación.";
     return;
   }
 
@@ -211,7 +255,7 @@ registroForm.addEventListener("submit", async (e) => {
       lat,
       lng,
       direccion,
-      estado: "pendiente",
+      estado,
       creadoPor: currentUser.uid,
       nombreUsuario: currentProfile.nombre || currentUser.email,
       rolUsuario: currentProfile.rol,
@@ -221,6 +265,7 @@ registroForm.addEventListener("submit", async (e) => {
     registroMessage.textContent = "Incidencia guardada correctamente.";
     registroForm.reset();
     categoriaInput.value = "";
+    estadoRegistro.value = "pendiente";
     ubicacionInicialCapturada = false;
 
     document.querySelectorAll(".tile-btn").forEach((b) => b.classList.remove("active"));
@@ -235,10 +280,6 @@ registroForm.addEventListener("submit", async (e) => {
     }
 
     map.setView([-33.45694, -70.64827], 13);
-
-    if (window.matchMedia("(max-width: 1024px)").matches) {
-      panelOperador.classList.remove("open");
-    }
   } catch (error) {
     console.error(error);
     registroMessage.textContent = "Error al guardar la incidencia.";
