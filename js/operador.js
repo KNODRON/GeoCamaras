@@ -21,7 +21,6 @@ const panelOperador = document.getElementById("panelOperador");
 
 const categoriaInput = document.getElementById("categoria");
 const descripcionInput = document.getElementById("descripcion");
-const estadoRegistro = document.getElementById("estadoRegistro");
 const latitudInput = document.getElementById("latitud");
 const longitudInput = document.getElementById("longitud");
 const direccionInput = document.getElementById("direccion");
@@ -225,16 +224,16 @@ registroForm.addEventListener("submit", async (e) => {
 
   const categoria = categoriaInput.value.trim();
   const descripcion = descripcionInput.value.trim();
-  const estado = estadoRegistro.value;
+  const estado = "pendiente";
   const direccion = direccionInput.value.trim();
 
   const lat = parseFloat(String(latitudInput.value).replace(",", "."));
   const lng = parseFloat(String(longitudInput.value).replace(",", "."));
 
-  if (!categoria || !descripcion || !estado || Number.isNaN(lat) || Number.isNaN(lng)) {
-    registroMessage.textContent = "Completa categoría, descripción, estado y captura la ubicación.";
-    return;
-  }
+if (!categoria || !descripcion || Number.isNaN(lat) || Number.isNaN(lng)) {
+  registroMessage.textContent = "Completa categoría, descripción y captura la ubicación.";
+  return;
+}
 
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     registroMessage.textContent = "Las coordenadas no son válidas.";
@@ -265,7 +264,6 @@ registroForm.addEventListener("submit", async (e) => {
     registroMessage.textContent = "Incidencia guardada correctamente.";
     registroForm.reset();
     categoriaInput.value = "";
-    estadoRegistro.value = "pendiente";
     ubicacionInicialCapturada = false;
 
     document.querySelectorAll(".tile-btn").forEach((b) => b.classList.remove("active"));
