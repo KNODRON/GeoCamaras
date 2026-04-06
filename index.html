@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GeoRegistro - Control Territorial Municipal</title>
 
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0b5d52" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -255,5 +259,15 @@
   ></script>
 
   <script type="module" src="app.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+          .then((reg) => console.log("Service Worker registrado:", reg.scope))
+          .catch((err) => console.error("Error registrando Service Worker:", err));
+      });
+    }
+  </script>
 </body>
 </html>
