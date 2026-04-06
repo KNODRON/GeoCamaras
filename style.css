@@ -1219,3 +1219,33 @@ table td:nth-child(7) {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.estado-select {
+  min-width: 140px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+}
+
+.estado-pendiente {
+  background: #fde8e8;
+  color: #b91c1c;
+  border: 1px solid #f5b5b5;
+}
+
+.estado-en-proceso {
+  background: #fff7d6;
+  color: #a16207;
+  border: 1px solid #f3da7a;
+}
+
+.estado-resuelto {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
