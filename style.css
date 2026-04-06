@@ -231,6 +231,10 @@ body {
   line-height: 1.2;
 }
 
+.panel-header .badge {
+  margin-left: 10px;
+}
+
 .panel-body {
   padding: 10px;
   overflow: auto;
@@ -313,6 +317,7 @@ body {
 .map-header {
   position: relative;
   z-index: 2;
+  padding: 8px 12px;
 }
 
 .layer-btns {
@@ -351,6 +356,7 @@ body {
 
 #map {
   min-height: 430px;
+  border-radius: 12px;
 }
 
 /* Label interno del mapa */
@@ -402,7 +408,7 @@ body {
 
 /* Mover controles de zoom para que no tapen el texto */
 .leaflet-top.leaflet-left {
-  top: 42px;
+  top: 58px;
 }
 
 .leaflet-control-zoom {
@@ -425,12 +431,26 @@ body {
   scrollbar-width: thin;
 }
 
+.detail-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-body::-webkit-scrollbar-thumb {
+  background: rgba(11, 93, 82, 0.6);
+  border-radius: 10px;
+}
+
 .detail-card {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px;
   margin-bottom: 10px;
   background: #fff;
+  transition: 0.2s ease;
+}
+
+.detail-card:hover {
+  transform: translateY(-2px);
 }
 
 .detail-card h4,
@@ -453,8 +473,7 @@ body {
 }
 
 .bottom-header {
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding: 8px 12px;
 }
 
 .bottom-header h3,
@@ -468,6 +487,10 @@ body {
 .table-wrapper {
   overflow: auto;
   border-top: 1px solid var(--line);
+}
+
+.table-wrapper table {
+  font-variant-numeric: tabular-nums;
 }
 
 table,
