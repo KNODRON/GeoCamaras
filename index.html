@@ -30,6 +30,14 @@
         <div class="pill">Comuna: Demo</div>
         <div class="pill">Rol: Supervisor</div>
         <div class="pill">Usuario: Juan</div>
+
+        <button class="topbar-action secondary" onclick="cambiarClave()">
+          Cambiar clave
+        </button>
+
+        <button class="topbar-action" onclick="cerrarSesion()">
+          Cerrar sesión
+        </button>
       </div>
     </header>
 
@@ -148,7 +156,7 @@
       <section class="map-card">
         <div class="map-header">
           <div class="map-header-left">
-            <h3>Mapa Multicriterio</h3>
+            <h3 class="titulo-seccion">Mapa Multicriterio</h3>
           </div>
 
           <div class="layer-btns">
@@ -213,11 +221,11 @@
     <!-- TABLA INFERIOR -->
     <section class="bottom-card">
       <div class="bottom-header">
-        <h3>Listado resumido de incidencias</h3>
+        <h3 class="titulo-seccion">Listado resumido de incidencias</h3>
         <span class="meta">Vista rápida para supervisión</span>
       </div>
 
-      <div class="table-wrap">
+      <div class="table-wrapper">
         <table>
           <thead>
             <tr>
