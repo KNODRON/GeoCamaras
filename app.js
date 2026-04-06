@@ -1,5 +1,9 @@
 import { auth, db } from "./js/firebase-config.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  onAuthStateChanged,
+  signOut,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // =========================
@@ -9,7 +13,7 @@ import { doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/fir
 const detailBadge = document.getElementById("detailBadge");
 const detailBody = document.getElementById("detailBody");
 const layerButtons = document.querySelectorAll(".layer-btn");
-const tableBody = document.querySelector(".table-wrap tbody");
+const tableBody = document.querySelector(".table-wrapper tbody");
 
 const kpiTotalEl = document.querySelector(".kpi-total");
 const kpiPendientesEl = document.querySelector(".kpi-pendientes");
@@ -18,6 +22,8 @@ const kpiCriticosEl = document.querySelector(".kpi-criticos");
 const topZonasContainer = document.getElementById("topZonasContainer");
 const actividadRecienteContainer = document.getElementById("actividadRecienteContainer");
 const panelActualizado = document.getElementById("panelActualizado");
+const pillUsuario = document.getElementById("pillUsuario");
+const pillRol = document.getElementById("pillRol");
 
 const filtroBuscar = document.getElementById("buscar");
 const filtroPeriodo = document.getElementById("periodo");
@@ -931,6 +937,13 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     const profile = snap.data();
+    if (pillUsuario) {
+      pillUsuario.textContent = `Usuario: ${profile.nombre || user.email || "Sin nombre"}`;
+    }
+
+    if (pillRol) {
+      pillRol.textContent = `Rol: ${profile.rol || "Sin rol"}`;
+    }
 
     if (!profile.activo) {
       window.location.href = "./login.html";
@@ -948,3 +961,30 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "./login.html";
   }
 });
+
+window.cerrarSesion = async function () {
+  try {
+    await signOut(auth);
+    window.location.href = "./login.html";
+  } catch (error) {
+    console.error("Error al cerrar sesión:", error);
+    alert("No se pudo cerrar la sesión.");
+  }
+};
+
+window.cambiarClave = async function () {
+  try {
+    const usuario = auth.currentUser;
+
+    if (!usuario || !usuario.email) {
+      alert("No se pudo identificar el correo del usuario autenticado.");
+      return;
+    }
+
+    await sendPasswordResetEmail(auth, usuario.email);
+    alert(`Se envió un correo de restablecimiento a ${usuario.email}`);
+  } catch (error) {
+    console.error("Error al enviar correo de restablecimiento:", error);
+    alert("No se pudo enviar el correo para cambiar la contraseña.");
+  }
+};
