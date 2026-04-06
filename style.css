@@ -643,3 +643,18 @@ th {
   color: #006b2e !important;
   border-color: #86d7a0 !important;
 }
+
+.estado-pendiente {
+  background: #ffe5e5;
+  color: #b30000;
+}
+
+.estado-en-proceso {
+  background: #fff4e5;
+  color: #b36b00;
+}
+
+.estado-resuelto {
+  background: #e6ffed;
+  color: #006b2e;
+}
