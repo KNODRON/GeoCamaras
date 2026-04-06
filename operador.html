@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoRegistro | Operador</title>
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css"
+  />
+</head>
+<body class="operador-ptz-body">
+  <div class="operador-topbar-floating">
+    <div class="operador-topbar-left">
+      <div class="brand-mini">GR</div>
+      <div>
+        <h1>GeoRegistro</h1>
+        <p>Panel Operador</p>
+      </div>
+    </div>
+
+    <button id="togglePanelOperador" class="menu-float-btn" type="button">☰</button>
+  </div>
+
+  <div id="mapOperador" class="map-fullscreen"></div>
+
+  <div class="operador-floating-actions">
+    <button id="btnUbicacionFloating" class="floating-action secondary" type="button" title="Obtener ubicación">
+      ⦿
+    </button>
+    <button id="btnPanelFloating" class="floating-action primary" type="button" title="Abrir panel">
+      ☰
+    </button>
+  </div>
+
+  <aside id="panelOperador" class="operador-bottomsheet">
+    <div class="sheet-handle"></div>
+
+    <section class="sheet-card">
+      <h3>Categorías</h3>
+      <div class="grid-categorias compact">
+        <button class="tile-btn azul" data-categoria="Alumbrado">💡<span>Alumbrado</span></button>
+        <button class="tile-btn verde" data-categoria="Basura">🗑️<span>Basura</span></button>
+        <button class="tile-btn azul" data-categoria="Seguridad">🛡️<span>Seguridad</span></button>
+        <button class="tile-btn verde" data-categoria="Áreas Verdes">🌳<span>Áreas Verdes</span></button>
+        <button class="tile-btn azul" data-categoria="Zoonosis">🐕<span>Zoonosis</span></button>
+        <button class="tile-btn verde" data-categoria="Infraestructura">🚧<span>Infraestructura</span></button>
+      </div>
+    </section>
+
+    <section class="sheet-card">
+      <h3>Registrar incidencia</h3>
+
+      <form id="registroForm" class="registro-form">
+        <div class="form-group">
+          <label for="categoria">Categoría</label>
+          <input type="text" id="categoria" readonly placeholder="Seleccione una categoría" required />
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea id="descripcion" rows="4" placeholder="Detalle de la incidencia..." required></textarea>
+        </div>
+
+        <input type="hidden" id="latitud" />
+        <input type="hidden" id="longitud" />
+
+        <div class="form-group">
+          <label for="direccion">Dirección / referencia</label>
+          <input type="text" id="direccion" placeholder="Ej: Av. Principal con Pasaje 4" />
+        </div>
+
+        <p class="helper-text">
+          Obtén la ubicación y luego ajusta el punto en el mapa si es necesario.
+        </p>
+
+        <div class="form-actions">
+          <button type="button" id="btnUbicacion" class="btn-secondary">Obtener ubicación</button>
+          <button type="submit" class="btn-primary">Guardar registro</button>
+        </div>
+
+        <p id="registroMessage" class="form-message"></p>
+      </form>
+    </section>
+
+    <section class="sheet-card session-card compact-session">
+      <div class="session-inline">
+        <div class="session-meta">
+          <h4>Sesión</h4>
+          <div id="userName" class="user-badge-inline">Usuario</div>
+        </div>
+
+        <div class="session-inline-actions">
+          <button id="changePasswordBtn" class="btn-secondary btn-small" type="button">Clave</button>
+          <button id="logoutBtn" class="btn-danger btn-small" type="button">Salir</button>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+  <script src="https://unpkg.com/leaflet-gesture-handling"></script>
+  <script type="module" src="./js/operador.js"></script>
+</body>
+</html>

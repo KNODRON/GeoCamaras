@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoRegistro - Control Territorial Municipal</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo">GR</div>
+        <div class="brand">
+          <h1>GeoRegistro</h1>
+          <p>Plataforma de prevención y control territorial municipal</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="pill">Comuna: Demo</div>
+        <div class="pill">Rol: Supervisor</div>
+        <div class="pill">Usuario: Juan</div>
+      </div>
+    </header>
+
+    <!-- FILTROS -->
+    <section class="filters">
+      <div class="field">
+        <label for="buscar">Buscar</label>
+        <input
+          id="buscar"
+          type="text"
+          placeholder="Dirección, folio, patente, inspector..."
+        />
+      </div>
+
+      <div class="field">
+        <label for="periodo">Período</label>
+        <select id="periodo">
+          <option>Últimos 7 días</option>
+          <option>Últimos 30 días</option>
+          <option>Este mes</option>
+          <option>Personalizado</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="categoria">Categoría</label>
+        <select id="categoria">
+          <option value="">Todas</option>
+          <option value="Alumbrado">Alumbrado</option>
+          <option value="Basura">Basura</option>
+          <option value="Seguridad">Seguridad</option>
+          <option value="Áreas Verdes">Áreas Verdes</option>
+          <option value="Zoonosis">Zoonosis</option>
+          <option value="Infraestructura">Infraestructura</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="estado">Estado</label>
+        <select id="estado">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="resuelto">Resuelto</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="sector">Sector</label>
+        <select id="sector">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="inspector">Inspector</label>
+        <select id="inspector">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" id="btnAplicarFiltros" type="button">Aplicar filtros</button>
+    </section>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main">
+      <!-- PANEL IZQUIERDO -->
+      <aside class="panel">
+        <div class="panel-header">
+          <h3>Panel Operativo</h3>
+          <span class="meta" id="panelActualizado">Actualizado: --</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="kpis">
+            <div class="kpi">
+              <div class="value kpi-total">0</div>
+              <div class="label">Incidencias</div>
+            </div>
+
+            <div class="kpi">
+              <div class="value kpi-pendientes">0</div>
+              <div class="label">Pendientes</div>
+            </div>
+
+            <div class="kpi">
+              <div class="value kpi-resueltas">0</div>
+              <div class="label">Resueltas</div>
+            </div>
+
+            <div class="kpi">
+              <div class="value kpi-criticos">0</div>
+              <div class="label">Sectores críticos</div>
+            </div>
+          </div>
+
+          <div class="section-title">Top zonas críticas</div>
+          <div id="topZonasContainer">
+            <div class="ranking-item">
+              <strong>Sin datos</strong>
+              <div class="meta">Aún no hay análisis disponible</div>
+            </div>
+          </div>
+
+          <div class="section-title">Actividad reciente</div>
+          <div id="actividadRecienteContainer">
+            <div class="activity-item">
+              <strong>Sin actividad</strong>
+              <div class="meta">Aún no hay registros cargados</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAPA -->
+      <section class="map-card">
+        <div class="map-header">
+          <div class="map-header-left">
+            <h3>Mapa Multicriterio</h3>
+          </div>
+
+          <div class="layer-btns">
+            <button class="layer-btn active" data-layer="multicriterio" type="button">
+              Multicriterio
+            </button>
+            <button class="layer-btn" data-layer="marcadores" type="button">
+              Marcadores
+            </button>
+            <button class="layer-btn" data-layer="ambos" type="button">
+              Ambos
+            </button>
+          </div>
+        </div>
+
+        <div class="map-area">
+          <div class="map-overlay-label">
+            Vista territorial · Modo supervisor
+          </div>
+
+          <div class="map-legend">
+            <div class="legend-row">
+              <div class="legend-color" style="background:#66bb6a;"></div>
+              <span>Bajo</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-color" style="background:#fdd835;"></div>
+              <span>Medio</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-color" style="background:#fb8c00;"></div>
+              <span>Alto</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-color" style="background:#e53935;"></div>
+              <span>Crítico</span>
+            </div>
+          </div>
+
+          <div id="map"></div>
+        </div>
+      </section>
+
+      <!-- PANEL DERECHO -->
+      <aside class="panel right-detail">
+        <div class="panel-header">
+          <h3>Detalle del Sector</h3>
+          <span id="detailBadge" class="badge critical">MUY CRÍTICO</span>
+        </div>
+
+        <div class="detail-body" id="detailBody">
+          <div class="detail-card">
+            <h4>Cargando detalle...</h4>
+            <div class="detail-list">
+              <div><span>Estado</span><strong>Esperando selección</strong></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- TABLA INFERIOR -->
+    <section class="bottom-card">
+      <div class="bottom-header">
+        <h3>Listado resumido de incidencias</h3>
+        <span class="meta">Vista rápida para supervisión</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Tipo</th>
+              <th>Sector</th>
+              <th>Inspector</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Índice sector</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="7">Cargando incidencias...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
