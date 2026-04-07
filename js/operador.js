@@ -263,6 +263,7 @@ if (!categoria || !descripcion || Number.isNaN(lat) || Number.isNaN(lng)) {
 
     registroMessage.textContent = ""; 
     alert("Incidencia registrada");
+    closePanel();
     registroForm.reset();
     categoriaInput.value = "";
     ubicacionInicialCapturada = false;
