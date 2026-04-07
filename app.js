@@ -4,7 +4,7 @@ import {
   signOut,
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc, collection, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // =========================
 // REFERENCIAS DOM
@@ -638,6 +638,18 @@ function aplicarFiltros(incidencias) {
 // TABLA
 // =========================
 
+function getEstadoClass(estado) {
+  if (estado === "pendiente") return "estado-pendiente";
+  if (estado === "en_proceso") return "estado-en-proceso";
+  if (estado === "resuelto") return "estado-resuelto";
+  return "";
+}
+
+function aplicarColorEstado(select) {
+  select.classList.remove("estado-pendiente", "estado-en-proceso", "estado-resuelto");
+  select.classList.add(getEstadoClass(select.value));
+}
+
 function renderIncidenciasEnTabla(registros) {
   if (!tableBody) return;
 
@@ -656,11 +668,49 @@ function renderIncidenciasEnTabla(registros) {
       <td>${escapeHtml(inc.tipo)}</td>
       <td>${escapeHtml(inc.sector)}</td>
       <td>${escapeHtml(inc.inspector)}</td>
-      <td>${escapeHtml(inc.estado)}</td>
+      <td>
+        <select class="estado-select ${getEstadoClass(inc.estadoRaw)}" data-id="${escapeHtml(inc.id)}">
+          <option value="pendiente" ${inc.estadoRaw === "pendiente" ? "selected" : ""}>Pendiente</option>
+          <option value="en_proceso" ${inc.estadoRaw === "en_proceso" ? "selected" : ""}>En proceso</option>
+          <option value="resuelto" ${inc.estadoRaw === "resuelto" ? "selected" : ""}>Resuelto</option>
+        </select>
+      </td>
       <td>${escapeHtml(inc.fecha)}</td>
       <td>${escapeHtml(inc.indiceSector)}</td>
     </tr>
   `).join("");
+
+  document.querySelectorAll(".estado-select").forEach((select) => {
+    aplicarColorEstado(select);
+
+    select.addEventListener("change", async (e) => {
+      const id = e.target.dataset.id;
+      const nuevoEstado = e.target.value;
+
+      aplicarColorEstado(e.target);
+
+      try {
+        await updateDoc(doc(db, "incidencias", id), {
+          estado: nuevoEstado
+        });
+
+        const item = todasLasIncidencias.find((i) => i.id === id);
+        if (item) {
+          item.estado = nuevoEstado;
+        }
+
+        procesarIncidencias({
+          docs: todasLasIncidencias.map((item) => ({
+            id: item.id,
+            data: () => item
+          }))
+        });
+      } catch (error) {
+        console.error("Error actualizando estado:", error);
+        alert("No se pudo actualizar el estado.");
+      }
+    });
+  });
 }
 
 // =========================
@@ -850,20 +900,22 @@ function procesarIncidencias(snapshot) {
   renderMulticriterioReal(sectoresAnalizados);
   renderMapMarkers(incidenciasFiltradas);
 
-  const registrosTabla = incidenciasFiltradas.map((item) => {
-    const sectorKey = getSectorKeyDesdeIncidencia(item);
-    const infoSector = sectoresAnalizados[sectorKey];
+const registrosTabla = incidenciasFiltradas.map((item) => {
+  const sectorKey = getSectorKeyDesdeIncidencia(item);
+  const infoSector = sectoresAnalizados[sectorKey];
 
-    return {
-      folio: `#${item.id.slice(0, 6)}`,
-      tipo: item.categoria || "Sin categoría",
-      sector: infoSector ? infoSector.nombre : getSectorNombreDesdeIncidencia(item),
-      inspector: item.nombreUsuario || "N/A",
-      estado: capitalizeEstado(item.estado),
-      fecha: formatFecha(item.fecha),
-      indiceSector: infoSector ? infoSector.indice : "-"
-    };
-  });
+  return {
+    id: item.id,
+    folio: `#${item.id.slice(0, 6)}`,
+    tipo: item.categoria || "Sin categoría",
+    sector: infoSector ? infoSector.nombre : getSectorNombreDesdeIncidencia(item),
+    inspector: item.nombreUsuario || "N/A",
+    estadoRaw: String(item.estado || "").toLowerCase(),
+    estado: capitalizeEstado(item.estado),
+    fecha: formatFecha(item.fecha),
+    indiceSector: infoSector ? infoSector.indice : "-"
+  };
+});
 
   renderIncidenciasEnTabla(registrosTabla);
   setLayerMode(currentLayerMode);
