@@ -898,3 +898,13 @@ table td:last-child {
 .estado-select:hover {
   transform: scale(1.03);
 }
+
+.stat-card strong {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.stat-card span {
+  font-size: 11px;
+  opacity: 0.7;
+}
