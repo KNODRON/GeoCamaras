@@ -261,7 +261,8 @@ if (!categoria || !descripcion || Number.isNaN(lat) || Number.isNaN(lng)) {
       fecha: serverTimestamp()
     });
 
-    registroMessage.textContent = "Incidencia guardada correctamente.";
+    registroMessage.textContent = ""; 
+    alert("Incidencia registrada");
     registroForm.reset();
     categoriaInput.value = "";
     ubicacionInicialCapturada = false;
