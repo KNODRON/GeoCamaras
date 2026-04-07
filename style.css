@@ -658,3 +658,37 @@ th {
   background: #e6ffed;
   color: #006b2e;
 }
+
+.estado-select {
+  min-width: 140px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  background-clip: padding-box;
+}
+
+/* Pendiente */
+.estado-pendiente {
+  background: #ffe5e5 !important;
+  color: #b30000 !important;
+  border-color: #ef9a9a !important;
+}
+
+/* En proceso */
+.estado-en-proceso {
+  background: #fff4e5 !important;
+  color: #b36b00 !important;
+  border-color: #f2c078 !important;
+}
+
+/* Resuelto */
+.estado-resuelto {
+  background: #e6ffed !important;
+  color: #006b2e !important;
+  border-color: #86d7a0 !important;
+}
