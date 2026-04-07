@@ -692,3 +692,200 @@ th {
   color: #006b2e !important;
   border-color: #86d7a0 !important;
 }
+
+/* =========================================
+   AJUSTES FINOS PANEL PRINCIPAL GEOREGISTRO
+   ========================================= */
+
+/* 1) TOPBAR: que los botones de clave/cerrar se vean iguales a la línea superior */
+.topbar-right .topbar-action,
+.topbar-right button,
+#changePasswordBtn,
+#logoutBtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.topbar-right .topbar-action:hover,
+.topbar-right button:hover,
+#changePasswordBtn:hover,
+#logoutBtn:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* 2) PANEL IZQUIERDO Y DERECHO con scroll interno limpio */
+.panel-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 255px);
+  scrollbar-width: thin;
+}
+
+.detail-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 255px);
+  scrollbar-width: thin;
+}
+
+.panel-body::-webkit-scrollbar,
+.detail-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-body::-webkit-scrollbar-thumb,
+.detail-body::-webkit-scrollbar-thumb {
+  background: rgba(11, 93, 82, 0.55);
+  border-radius: 10px;
+}
+
+/* 3) TITULOS: subirlos para que no queden hundidos */
+.map-header,
+.bottom-header {
+  padding: 6px 12px 8px;
+  align-items: center;
+}
+
+.map-header h3,
+.bottom-header h3,
+.titulo-seccion {
+  margin: 0 !important;
+  padding-left: 0 !important;
+  line-height: 1.1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 4) MOVER CONTROLES + / - PARA QUE NO TAPEN EL LABEL */
+.leaflet-top.leaflet-left {
+  top: 70px !important;
+  left: 0;
+}
+
+.leaflet-control-zoom {
+  margin-top: 0 !important;
+  margin-left: 10px !important;
+}
+
+.map-overlay-label {
+  top: 10px !important;
+  left: 58px !important;
+  max-width: calc(100% - 72px);
+}
+
+/* 5) TABLA: corregir encabezado corrido hacia la derecha */
+.bottom-card {
+  grid-template-rows: 42px 1fr;
+}
+
+.table-wrapper {
+  overflow: auto;
+  border-top: 1px solid var(--line);
+}
+
+.table-wrapper table,
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table-wrapper th,
+.table-wrapper td,
+table th,
+table td {
+  text-align: left;
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+.table-wrapper th:first-child,
+.table-wrapper td:first-child,
+table th:first-child,
+table td:first-child {
+  padding-left: 14px;
+}
+
+.table-wrapper th:last-child,
+.table-wrapper td:last-child,
+table th:last-child,
+table td:last-child {
+  padding-right: 14px;
+}
+
+/* anchos finos de columnas del listado resumido */
+.table-wrapper th:nth-child(1),
+.table-wrapper td:nth-child(1) { width: 9%; }
+
+.table-wrapper th:nth-child(2),
+.table-wrapper td:nth-child(2) { width: 13%; }
+
+.table-wrapper th:nth-child(3),
+.table-wrapper td:nth-child(3) { width: 24%; }
+
+.table-wrapper th:nth-child(4),
+.table-wrapper td:nth-child(4) { width: 16%; }
+
+.table-wrapper th:nth-child(5),
+.table-wrapper td:nth-child(5) { width: 12%; }
+
+.table-wrapper th:nth-child(6),
+.table-wrapper td:nth-child(6) { width: 16%; }
+
+.table-wrapper th:nth-child(7),
+.table-wrapper td:nth-child(7) { width: 10%; }
+
+/* 6) BADGE DE DETALLE DEL SECTOR: volver a formato más limpio */
+.panel-header .badge,
+#detailBadge {
+  margin-left: 8px;
+  margin-top: 0;
+  padding: 4px 8px;
+  font-size: 10px;
+  border-radius: 999px;
+  min-width: auto;
+  line-height: 1.2;
+  align-self: center;
+}
+
+/* 7) PANEL DERECHO: que no se vea tan apretado */
+.detail-card {
+  margin-bottom: 10px;
+  padding: 12px;
+}
+
+.detail-card h4,
+.detail-card h5 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.detail-list {
+  line-height: 1.5;
+}
+
+/* 8) MAPA MULTICRITERIO: asegurar que el layout no empuje textos */
+.map-card {
+  grid-template-rows: 42px 1fr;
+  min-height: 400px;
+}
+
+.map-area {
+  position: relative;
+  min-height: 430px;
+}
+
+/* 9) RESPONSIVE DESKTOP MEDIO */
+@media (max-width: 1400px) {
+  .main {
+    grid-template-columns: 260px 1fr 280px;
+  }
+}
