@@ -3,7 +3,7 @@
   "name": "GeoRegistro",
   "short_name": "GeoRegistro",
   "description": "Plataforma de prevención y control territorial municipal",
-  "start_url": "./index.html",
+  "start_url": "./operador.html"
   "scope": "./",
   "display": "standalone",
   "background_color": "#f4f6f8",
