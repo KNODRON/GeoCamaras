@@ -888,3 +888,41 @@ tbody tr:hover,
     text-align: left;
   }
 }
+
+.app {
+  background: #08131a !important;
+}
+
+.filters,
+.panel,
+.map-card,
+.bottom-card,
+.detail-card,
+.table-wrapper {
+  background: #10222c !important;
+}
+
+.topbar {
+  background: linear-gradient(90deg, #0d5c4f, #167b69) !important;
+}
+
+.kpi,
+.ranking-item,
+.activity-item {
+  background: #112833 !important;
+}
+
+.field input,
+.field select {
+  background: #081922 !important;
+  color: #eaf4f7 !important;
+  border-color: rgba(151, 184, 198, 0.22) !important;
+}
+
+th {
+  background: #0c1d26 !important;
+}
+
+td {
+  background: #10222c !important;
+}
