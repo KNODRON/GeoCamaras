@@ -1,13 +1,13 @@
 :root {
   --bg: #e7f7e6;
   --bg-2: #edfffa;
-  --panel: #0f2028;
-  --panel-2: #132831;
+  --panel: #f0faf4;
+  --panel-2: #d7d9d7;
   --card: rgba(17, 34, 43, 0.92);
   --card-soft: rgba(19, 40, 49, 0.82);
   --line: rgba(151, 184, 198, 0.16);
   --line-strong: rgba(151, 184, 198, 0.28);
-  --text: #e9f2f5;
+  --text: #465b63;
   --text-soft: #bdd0d8;
   --muted: #8aa3ad;
   --primary: #0b5d52;
