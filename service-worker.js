@@ -1,10 +1,10 @@
-const CACHE_NAME = "georegistro-v2.0.0";
+const CACHE_NAME = "georegistro-v2.1.0";
+
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./login.html",
   "./operador.html",
-  "./admin.html",
   "./style-admin.css",
   "./style-operador.css",
   "./style-login.css",
@@ -19,6 +19,7 @@ const APP_ASSETS = [
   "./js/operador.js"
 ];
 
+// INSTALAR
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_ASSETS))
@@ -26,6 +27,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
+// ACTIVAR
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -38,20 +40,30 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// FETCH
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  const isNavigationRequest = event.request.mode === "navigate";
+
   event.respondWith(
     fetch(event.request)
-      .then((networkResponse) => {
-        const responseClone = networkResponse.clone();
+      .then((response) => {
+        const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
+          cache.put(event.request, clone);
         });
-        return networkResponse;
+        return response;
       })
-      .catch(() => caches.match(event.request).then((cachedResponse) => {
-        return cachedResponse || caches.match("./index.html");
-      }))
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+
+        if (isNavigationRequest) {
+          return caches.match("./operador.html");
+        }
+
+        return caches.match("./index.html");
+      })
   );
 });
