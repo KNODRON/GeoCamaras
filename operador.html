@@ -19,6 +19,88 @@
     rel="stylesheet"
     href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css"
   />
+
+  <style>
+    .install-pwa-banner {
+      position: fixed;
+      left: 14px;
+      right: 14px;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      z-index: 1400;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid rgba(11, 93, 82, 0.12);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .install-pwa-banner.show {
+      display: flex;
+    }
+
+    .install-pwa-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .install-pwa-copy h4 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      color: #1f2a33;
+    }
+
+    .install-pwa-copy p {
+      margin: 0;
+      font-size: 13px;
+      color: #667784;
+      line-height: 1.35;
+    }
+
+    .install-pwa-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .install-pwa-btn {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+    }
+
+    .install-pwa-btn.primary {
+      background: linear-gradient(180deg, #14b8a6, #0f7669);
+      color: #fff;
+    }
+
+    .install-pwa-btn.secondary {
+      background: #eef2f5;
+      color: #1f2a33;
+      border: 1px solid #d9e1e7;
+    }
+
+    @media (max-width: 480px) {
+      .install-pwa-banner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .install-pwa-actions {
+        width: 100%;
+      }
+
+      .install-pwa-btn {
+        flex: 1;
+      }
+    }
+  </style>
 </head>
 <body class="operador-ptz-body">
   <div class="operador-topbar-floating">
@@ -108,6 +190,18 @@
       </div>
     </section>
   </aside>
+
+  <div id="installPwaBanner" class="install-pwa-banner" aria-live="polite">
+    <div class="install-pwa-copy">
+      <h4>Instalar GeoRegistro</h4>
+      <p id="installPwaText">Agrega esta app al inicio para abrir directo el panel operador.</p>
+    </div>
+
+    <div class="install-pwa-actions">
+      <button id="installPwaDismiss" class="install-pwa-btn secondary" type="button">Ahora no</button>
+      <button id="installPwaBtn" class="install-pwa-btn primary" type="button">Instalar</button>
+    </div>
+  </div>
 
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
