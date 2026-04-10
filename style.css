@@ -496,7 +496,7 @@ th {
 }
 
 .admin-view {
-  display: none;
+  
   padding: 14px;
   height: 100%;
 }
@@ -1221,7 +1221,7 @@ table td:last-child {
 }
 
 #mapOperador .leaflet-control-zoom {
-  display: none;
+  display: block !important;
 }
 
 @media (min-width: 1025px) {
