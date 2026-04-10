@@ -1,12 +1,13 @@
-const CACHE_NAME = "georegistro-v1.0.0";
+const CACHE_NAME = "georegistro-v2.0.0";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./login.html",
   "./operador.html",
   "./admin.html",
-  "./style.css",
-  "./app.js",
+  "./style-admin.css",
+  "./style-operador.css",
+  "./style-login.css",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
