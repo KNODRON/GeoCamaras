@@ -1,9 +1,9 @@
 {
-  "id": "/",
-  "name": "GeoRegistro",
+  "id": "/operador",
+  "name": "GeoRegistro Operador",
   "short_name": "GeoRegistro",
-  "description": "Plataforma de prevención y control territorial municipal",
-  "start_url": "./operador.html"
+  "description": "Plataforma de análisis territorial y apoyo a la decisión en seguridad municipal",
+  "start_url": "./operador.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f4f6f8",
