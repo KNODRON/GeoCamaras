@@ -926,3 +926,100 @@ th {
 td {
   background: #10222c !important;
 }
+
+/* =========================================
+   PRUEBA FUERTE DE COLOR - GEOREGISTRO ADMIN
+   pegar al final del archivo
+   ========================================= */
+
+html,
+body {
+  background: #5a0000 !important;
+}
+
+body {
+  color: #ffffff !important;
+}
+
+.app {
+  background: #3a0000 !important;
+}
+
+.topbar {
+  background: linear-gradient(90deg, #ff0000, #ff7b00) !important;
+  border: 3px solid #ffffff !important;
+}
+
+.filters {
+  background: #001eff !important;
+  border: 3px solid #ffffff !important;
+}
+
+.panel {
+  background: #008000 !important;
+  border: 3px solid #ffffff !important;
+}
+
+.map-card {
+  background: #4b0082 !important;
+  border: 3px solid #ffffff !important;
+}
+
+.bottom-card {
+  background: #111111 !important;
+  border: 3px solid #00ffff !important;
+}
+
+.detail-card,
+.kpi,
+.ranking-item,
+.activity-item,
+.table-wrapper {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 2px solid #ffffff !important;
+}
+
+.field input,
+.field select {
+  background: #ffff00 !important;
+  color: #000000 !important;
+  border: 2px solid #ff0000 !important;
+}
+
+.field label,
+.panel-header,
+.map-header,
+.bottom-header,
+.section-title,
+.meta,
+th,
+td,
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+strong,
+div {
+  color: inherit;
+}
+
+th {
+  background: #00ffff !important;
+  color: #000000 !important;
+}
+
+td {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.layer-btn,
+.btn,
+.topbar-action,
+.pill {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #ff0000 !important;
+}
