@@ -173,8 +173,11 @@
             <button class="layer-btn" data-layer="ambos" type="button">
               Ambos
             </button>
+
+            <button id="btnAbrirListado" class="btn-secondary" type="button" onclick="window.location.href='./listado.html'">
+              Listado
+            </button>
           </div>
-        </div>
 
         <div class="map-area">
           <div class="map-overlay-label">
@@ -221,36 +224,6 @@
         </div>
       </aside>
     </main>
-
-    <!-- TABLA INFERIOR -->
-    <section class="bottom-card">
-      <div class="bottom-header">
-        <h3 class="titulo-seccion">Listado resumido de incidencias</h3>
-        <span class="meta">Vista rápida para supervisión</span>
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Folio</th>
-              <th>Tipo</th>
-              <th>Sector</th>
-              <th>Inspector</th>
-              <th>Estado</th>
-              <th>Fecha</th>
-              <th>Índice sector</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="7">Cargando incidencias...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </div>
 
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
