@@ -141,3 +141,28 @@ button, input, select { font: inherit; }
   .kpis-grid { grid-template-columns: 1fr; }
   .filters-card { grid-template-columns: 1fr; }
 }
+
+.comparativa-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.comparativa-card h2{
+    font-size:28px;
+    margin-top:8px;
+    font-weight:700;
+}
+
+.positivo{
+    color:#16a34a;
+}
+
+.negativo{
+    color:#dc2626;
+}
+
+.neutro{
+    color:#64748b;
+}
