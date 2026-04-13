@@ -219,16 +219,18 @@ function renderTabla(registros) {
 }
 
 function exportarCSV(registros) {
+  const fechaGeneracion = new Date().toLocaleString("es-CL");
+
   const encabezados = [
-    "folio",
-    "categoria",
-    "descripcion",
-    "direccion_sector",
-    "inspector",
-    "estado",
-    "fecha",
-    "lat",
-    "lng"
+    "Folio",
+    "Categoría",
+    "Descripción",
+    "Dirección / Sector",
+    "Inspector",
+    "Estado",
+    "Fecha",
+    "Latitud",
+    "Longitud"
   ];
 
   const filas = registros.map((item) => [
@@ -243,10 +245,21 @@ function exportarCSV(registros) {
     typeof item.lng === "number" ? item.lng : ""
   ]);
 
-  const csv = [
-    encabezados.join(";"),
-    ...filas.map(fila =>
-      fila.map(valor =>
+  const lineasIniciales = [
+    [`Sistema`, `GeoRegistro`],
+    [`Reporte`, `Listado de incidencias`],
+    [`Fecha de generación`, fechaGeneracion],
+    [`Total de registros`, registros.length],
+    [] // línea en blanco
+  ];
+
+  const contenido = [
+    ...lineasIniciales.map((fila) =>
+      fila.map((valor) => `"${String(valor || "").replace(/"/g, '""')}"`).join(";")
+    ),
+    encabezados.map((valor) => `"${valor}"`).join(";"),
+    ...filas.map((fila) =>
+      fila.map((valor) =>
         `"${String(valor).replace(/"/g, '""')}"`
       ).join(";")
     )
@@ -255,18 +268,16 @@ function exportarCSV(registros) {
   const BOM = "\uFEFF";
 
   const blob = new Blob(
-    [BOM + csv],
+    [BOM + contenido],
     { type: "text/csv;charset=utf-8;" }
   );
 
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
+  const fechaArchivo = new Date().toISOString().slice(0, 10);
 
   a.href = url;
-
-  a.download = `georegistro_incidencias_${new Date().toISOString().slice(0,10)}.csv`;
-
+  a.download = `georegistro_incidencias_${fechaArchivo}.csv`;
   a.click();
 
   URL.revokeObjectURL(url);
