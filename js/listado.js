@@ -244,19 +244,29 @@ function exportarCSV(registros) {
   ]);
 
   const csv = [
-    encabezados.join(","),
-    ...filas.map((fila) =>
-      fila.map((valor) => `"${String(valor).replaceAll('"', '""')}"`).join(",")
+    encabezados.join(";"),
+    ...filas.map(fila =>
+      fila.map(valor =>
+        `"${String(valor).replace(/"/g, '""')}"`
+      ).join(";")
     )
-  ].join("\\n");
+  ].join("\n");
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const BOM = "\uFEFF";
+
+  const blob = new Blob(
+    [BOM + csv],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
   const url = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
-  const fecha = new Date().toISOString().slice(0, 10);
 
   a.href = url;
-  a.download = `georegistro_incidencias_${fecha}.csv`;
+
+  a.download = `georegistro_incidencias_${new Date().toISOString().slice(0,10)}.csv`;
+
   a.click();
 
   URL.revokeObjectURL(url);
