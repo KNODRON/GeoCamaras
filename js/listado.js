@@ -220,56 +220,160 @@ function renderTabla(registros) {
 
 function exportarCSV(registros) {
   const fechaGeneracion = new Date().toLocaleString("es-CL");
+  const total = registros.length;
 
-  const encabezados = [
-    "Folio",
-    "Categoría",
-    "Descripción",
-    "Dirección / Sector",
-    "Inspector",
-    "Estado",
-    "Fecha",
-    "Latitud",
-    "Longitud"
-  ];
+  const filasHtml = registros.map((item) => {
+    const estado = capitalizeEstado(item.estado);
+    let estadoBg = "#fff4e1";
+    let estadoColor = "#b97717";
 
-  const filas = registros.map((item) => [
-    `#${item.id.slice(0, 6)}`,
-    item.categoria || "",
-    item.descripcion || "",
-    getSectorNombre(item),
-    item.nombreUsuario || "N/A",
-    capitalizeEstado(item.estado),
-    formatFecha(item.fecha),
-    typeof item.lat === "number" ? item.lat : "",
-    typeof item.lng === "number" ? item.lng : ""
-  ]);
+    if (String(item.estado || "").toLowerCase() === "pendiente") {
+      estadoBg = "#fdeaea";
+      estadoColor = "#b94d4d";
+    } else if (String(item.estado || "").toLowerCase() === "resuelto") {
+      estadoBg = "#e7f6ea";
+      estadoColor = "#2f8534";
+    }
 
-  const lineasIniciales = [
-    [`Sistema`, `GeoRegistro`],
-    [`Reporte`, `Listado de incidencias`],
-    [`Fecha de generación`, fechaGeneracion],
-    [`Total de registros`, registros.length],
-    [] // línea en blanco
-  ];
+    return `
+      <tr>
+        <td style="border:1px solid #d7dde3; padding:8px;">#${item.id.slice(0, 6)}</td>
+        <td style="border:1px solid #d7dde3; padding:8px;">${escapeHtml(item.categoria || "")}</td>
+        <td style="border:1px solid #d7dde3; padding:8px;">${escapeHtml(item.descripcion || "")}</td>
+        <td style="border:1px solid #d7dde3; padding:8px;">${escapeHtml(getSectorNombre(item))}</td>
+        <td style="border:1px solid #d7dde3; padding:8px;">${escapeHtml(item.nombreUsuario || "N/A")}</td>
+        <td style="border:1px solid #d7dde3; padding:8px; background:${estadoBg}; color:${estadoColor}; font-weight:bold;">
+          ${escapeHtml(estado)}
+        </td>
+        <td style="border:1px solid #d7dde3; padding:8px;">${escapeHtml(formatFecha(item.fecha))}</td>
+        <td style="border:1px solid #d7dde3; padding:8px;">${typeof item.lat === "number" ? item.lat : ""}</td>
+        <td style="border:1px solid #d7dde3; padding:8px;">${typeof item.lng === "number" ? item.lng : ""}</td>
+      </tr>
+    `;
+  }).join("");
 
-  const contenido = [
-    ...lineasIniciales.map((fila) =>
-      fila.map((valor) => `"${String(valor || "").replace(/"/g, '""')}"`).join(";")
-    ),
-    encabezados.map((valor) => `"${valor}"`).join(";"),
-    ...filas.map((fila) =>
-      fila.map((valor) =>
-        `"${String(valor).replace(/"/g, '""')}"`
-      ).join(";")
-    )
-  ].join("\n");
+  const htmlExcel = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="ProgId" content="Excel.Sheet">
+      <meta name="Generator" content="GeoRegistro">
+      <style>
+        body {
+          font-family: Calibri, Arial, sans-serif;
+        }
 
-  const BOM = "\uFEFF";
+        .title {
+          background: #0b7c70;
+          color: white;
+          font-size: 18pt;
+          font-weight: bold;
+          text-align: left;
+          padding: 14px;
+        }
+
+        .subtitle {
+          background: #0f9a8a;
+          color: white;
+          font-size: 10pt;
+          padding: 8px 14px;
+        }
+
+        .meta-label {
+          background: #f3f6f8;
+          font-weight: bold;
+          border: 1px solid #d7dde3;
+          padding: 8px;
+        }
+
+        .meta-value {
+          border: 1px solid #d7dde3;
+          padding: 8px;
+        }
+
+        .header {
+          background: #dff3ef;
+          color: #0b5d52;
+          font-weight: bold;
+          text-transform: uppercase;
+          border: 1px solid #c8d5dc;
+          padding: 9px;
+        }
+
+        table {
+          border-collapse: collapse;
+        }
+      </style>
+    </head>
+    <body>
+      <table>
+        <tr>
+          <td class="title" colspan="9">GeoRegistro - Reporte de Incidencias</td>
+        </tr>
+        <tr>
+          <td class="subtitle" colspan="9">Plataforma de análisis territorial y apoyo a la decisión en seguridad municipal</td>
+        </tr>
+      </table>
+
+      <br>
+
+      <table>
+        <tr>
+          <td class="meta-label">Sistema</td>
+          <td class="meta-value">GeoRegistro</td>
+        </tr>
+        <tr>
+          <td class="meta-label">Reporte</td>
+          <td class="meta-value">Listado de incidencias</td>
+        </tr>
+        <tr>
+          <td class="meta-label">Fecha de generación</td>
+          <td class="meta-value">${escapeHtml(fechaGeneracion)}</td>
+        </tr>
+        <tr>
+          <td class="meta-label">Total de registros</td>
+          <td class="meta-value">${total}</td>
+        </tr>
+      </table>
+
+      <br>
+
+      <table>
+        <colgroup>
+          <col style="width:110px;">
+          <col style="width:150px;">
+          <col style="width:340px;">
+          <col style="width:260px;">
+          <col style="width:170px;">
+          <col style="width:120px;">
+          <col style="width:220px;">
+          <col style="width:120px;">
+          <col style="width:120px;">
+        </colgroup>
+
+        <tr>
+          <td class="header">Folio</td>
+          <td class="header">Categoría</td>
+          <td class="header">Descripción</td>
+          <td class="header">Dirección / Sector</td>
+          <td class="header">Inspector</td>
+          <td class="header">Estado</td>
+          <td class="header">Fecha</td>
+          <td class="header">Latitud</td>
+          <td class="header">Longitud</td>
+        </tr>
+
+        ${filasHtml}
+      </table>
+    </body>
+    </html>
+  `;
 
   const blob = new Blob(
-    [BOM + contenido],
-    { type: "text/csv;charset=utf-8;" }
+    ["\ufeff", htmlExcel],
+    { type: "application/vnd.ms-excel;charset=utf-8;" }
   );
 
   const url = URL.createObjectURL(blob);
@@ -277,7 +381,7 @@ function exportarCSV(registros) {
   const fechaArchivo = new Date().toISOString().slice(0, 10);
 
   a.href = url;
-  a.download = `georegistro_incidencias_${fechaArchivo}.csv`;
+  a.download = `georegistro_reporte_${fechaArchivo}.xls`;
   a.click();
 
   URL.revokeObjectURL(url);
