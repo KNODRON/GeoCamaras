@@ -21,6 +21,10 @@ const rankingMeta = document.getElementById("rankingMeta");
 const tablaTopSectores = document.getElementById("tablaTopSectores");
 const lecturaAutomatica = document.getElementById("lecturaAutomatica");
 
+const varGeneral = document.getElementById("varGeneral");
+const varSeguridad = document.getElementById("varSeguridad");
+const proyeccionPeriodo = document.getElementById("proyeccionPeriodo");
+
 /* ==========================
    VARIABLES
 ========================== */
@@ -238,6 +242,7 @@ function renderAnalisis() {
 
     renderTablaSectores(sectores);
     renderMapa(sectores);
+    calcularComparativa(registros);
 
 }
 
@@ -319,5 +324,82 @@ function renderMapa(sectores) {
         .addTo(mapLayer);
 
     });
+
+}
+
+function calcularComparativa(registrosActuales){
+
+    const dias = Number(periodoEl.value);
+
+    if(dias <= 0) return;
+
+    const hoy = new Date();
+
+    const inicioActual = new Date();
+    inicioActual.setDate(hoy.getDate()-dias);
+
+    const inicioAnterior = new Date();
+    inicioAnterior.setDate(hoy.getDate()-(dias*2));
+
+    const finAnterior = new Date(inicioActual);
+
+    const periodoAnterior = allIncidencias.filter(i=>{
+
+        const fecha = getFechaDate(i.fecha);
+
+        return fecha >= inicioAnterior && fecha < finAnterior;
+
+    });
+
+    const totalAnterior = periodoAnterior.length;
+    const totalActual = registrosActuales.length;
+
+    let variacion = 0;
+
+    if(totalAnterior > 0){
+
+        variacion = (((totalActual-totalAnterior)/totalAnterior)*100);
+
+    }
+
+    varGeneral.textContent =
+        `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
+
+    varGeneral.className =
+        variacion > 0 ? "positivo" :
+        variacion < 0 ? "negativo" :
+        "neutro";
+
+
+
+    const segActual =
+        registrosActuales.filter(i=>i.categoria==="Seguridad").length;
+
+    const segAnterior =
+        periodoAnterior.filter(i=>i.categoria==="Seguridad").length;
+
+    let varSeg = 0;
+
+    if(segAnterior > 0){
+
+        varSeg = (((segActual-segAnterior)/segAnterior)*100);
+
+    }
+
+    varSeguridad.textContent =
+        `${varSeg >= 0 ? "+" : ""}${varSeg.toFixed(1)}%`;
+
+    varSeguridad.className =
+        varSeg > 0 ? "positivo" :
+        varSeg < 0 ? "negativo" :
+        "neutro";
+
+
+
+    let proyeccion = Math.round(
+        totalActual + ((variacion/100)*totalActual)
+    );
+
+    proyeccionPeriodo.textContent = proyeccion;
 
 }
