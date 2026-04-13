@@ -16,10 +16,13 @@ const APP_ASSETS = [
   "./js/firebase-config.js",
   "./js/guards.js",
   "./js/admin.js",
-  "./js/operador.js"
+  "./js/operador.js",
   "./listado.html",
   "./style-listado.css",
   "./js/listado.js",
+  "./analisis.html",
+  "./style-analisis.css",
+  "./js/analisis.js"
 ];
 
 // INSTALAR
