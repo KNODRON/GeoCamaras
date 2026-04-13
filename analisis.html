@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoRegistro | Análisis Territorial</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0b7c70" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="./style-analisis.css" />
+</head>
+<body>
+  <div class="analisis-app">
+    <header class="analisis-topbar">
+      <div class="brand-wrap">
+        <div class="brand-mini">GR</div>
+        <div>
+          <h1>GeoRegistro</h1>
+          <p>Análisis Territorial · Lectura ejecutiva y priorización operativa en tiempo real</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="pill">Comuna: Demo</div>
+        <div class="pill" id="analisisUsuario">Usuario: --</div>
+        <button class="btn btn-secondary" type="button" onclick="window.location.href='./index.html'">Volver al mapa</button>
+        <button class="btn btn-primary" type="button" onclick="window.location.href='./listado.html'">Ir a listado</button>
+      </div>
+    </header>
+
+    <section class="filters-card">
+      <div class="field">
+        <label for="analisisPeriodo">Período</label>
+        <select id="analisisPeriodo">
+          <option value="7">Últimos 7 días</option>
+          <option value="14">Últimos 14 días</option>
+          <option value="30">Últimos 30 días</option>
+          <option value="0">Todo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="analisisCategoria">Categoría</label>
+        <select id="analisisCategoria"><option value="">Todas</option></select>
+      </div>
+      <div class="field">
+        <label for="analisisEstado">Estado</label>
+        <select id="analisisEstado">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="resuelto">Resuelto</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="analisisInspector">Inspector</label>
+        <select id="analisisInspector"><option value="">Todos</option></select>
+      </div>
+      <button id="btnActualizarAnalisis" class="btn btn-primary" type="button">Actualizar análisis</button>
+    </section>
+
+    <section class="kpis-grid">
+      <article class="kpi-card"><span class="kpi-label">Total incidencias</span><strong id="kpiTotal">0</strong><small>Base del análisis</small></article>
+      <article class="kpi-card"><span class="kpi-label">Pendientes activas</span><strong id="kpiPendientes">0</strong><small>Seguimiento inmediato</small></article>
+      <article class="kpi-card"><span class="kpi-label">Sectores críticos</span><strong id="kpiCriticos">0</strong><small>Prioridad alta / crítica</small></article>
+      <article class="kpi-card"><span class="kpi-label">Reincidencias</span><strong id="kpiReincidencias">0</strong><small>Eventos repetidos por cuadrícula</small></article>
+      <article class="kpi-card"><span class="kpi-label">Tendencia general</span><strong id="kpiTendencia">—</strong><small id="kpiTendenciaDetalle">Sin comparación aún</small></article>
+      <article class="kpi-card"><span class="kpi-label">Categoría predominante</span><strong id="kpiCategoria">—</strong><small>Mayor presencia territorial</small></article>
+    </section>
+
+    <section class="charts-grid">
+      <article class="card chart-card">
+        <div class="card-header"><h3>Incidencias por categoría</h3><span class="meta">Distribución actual</span></div>
+        <div class="chart-wrap"><canvas id="chartCategorias"></canvas></div>
+      </article>
+
+      <article class="card chart-card">
+        <div class="card-header"><h3>Estados operativos</h3><span class="meta">Pendiente / En proceso / Resuelto</span></div>
+        <div class="chart-wrap"><canvas id="chartEstados"></canvas></div>
+      </article>
+
+      <article class="card chart-card wide">
+        <div class="card-header"><h3>Tendencia temporal</h3><span class="meta">Últimos días según filtros</span></div>
+        <div class="chart-wrap large"><canvas id="chartTendencia"></canvas></div>
+      </article>
+    </section>
+
+    <section class="insights-grid">
+      <article class="card table-card">
+        <div class="card-header"><h3>Top sectores críticos</h3><span id="rankingMeta" class="meta">0 sectores analizados</span></div>
+        <div class="table-wrap">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th>Sector</th>
+                <th>Índice</th>
+                <th>Prioridad</th>
+                <th>Reincidencia</th>
+                <th>Categoría dominante</th>
+                <th>Tendencia</th>
+              </tr>
+            </thead>
+            <tbody id="tablaTopSectores"><tr><td colspan="6">Cargando análisis...</td></tr></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card narrative-card">
+        <div class="card-header"><h3>Lectura automática del sistema</h3><span class="meta">Interpretación ejecutiva</span></div>
+        <div id="lecturaAutomatica" class="narrative-body">Esperando datos para generar lectura automática.</div>
+      </article>
+
+      <article class="card map-mini-card">
+        <div class="card-header"><h3>Mapa analítico</h3><span class="meta">Top 5 focos territoriales</span></div>
+        <div id="mapAnalisis" class="map-mini"></div>
+      </article>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module" src="./js/analisis.js"></script>
+</body>
+</html>
