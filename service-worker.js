@@ -17,6 +17,9 @@ const APP_ASSETS = [
   "./js/guards.js",
   "./js/admin.js",
   "./js/operador.js"
+  "./listado.html",
+  "./style-listado.css",
+  "./js/listado.js",
 ];
 
 // INSTALAR
