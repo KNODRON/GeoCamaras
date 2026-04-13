@@ -222,6 +222,25 @@ function exportarCSV(registros) {
   const fechaGeneracion = new Date().toLocaleString("es-CL");
   const total = registros.length;
 
+  let pendientes = 0;
+  let enProceso = 0;
+  let resueltas = 0;
+
+  const categoriasConteo = {};
+
+  registros.forEach((item) => {
+    const estado = String(item.estado || "").toLowerCase();
+
+    if (estado === "pendiente") pendientes++;
+    else if (estado === "en_proceso") enProceso++;
+    else if (estado === "resuelto") resueltas++;
+
+    const categoria = item.categoria || "Sin categoría";
+    categoriasConteo[categoria] = (categoriasConteo[categoria] || 0) + 1;
+  });
+
+  const categoriaPredominante = Object.entries(categoriasConteo).sort((a, b) => b[1] - a[1])[0]?.[0] || "Sin datos";
+
   const filasHtml = registros.map((item) => {
     const estado = capitalizeEstado(item.estado);
     let estadoBg = "#fff4e1";
@@ -293,6 +312,32 @@ function exportarCSV(registros) {
           padding: 8px;
         }
 
+        .summary-title {
+          background: #dff3ef;
+          color: #0b5d52;
+          font-weight: bold;
+          border: 1px solid #c8d5dc;
+          padding: 9px;
+        }
+
+        .summary-box {
+          border: 1px solid #d7dde3;
+          padding: 10px;
+          text-align: center;
+          font-weight: bold;
+        }
+
+        .summary-number {
+          font-size: 16pt;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .summary-label {
+          font-size: 9pt;
+          color: #586673;
+        }
+
         .header {
           background: #dff3ef;
           color: #0b5d52;
@@ -335,6 +380,36 @@ function exportarCSV(registros) {
         <tr>
           <td class="meta-label">Total de registros</td>
           <td class="meta-value">${total}</td>
+        </tr>
+      </table>
+
+      <br>
+
+      <table>
+        <tr>
+          <td class="summary-title" colspan="5">Resumen Ejecutivo</td>
+        </tr>
+        <tr>
+          <td class="summary-box" style="background:#f8fafb;">
+            <span class="summary-number">${total}</span>
+            <span class="summary-label">Total incidencias</span>
+          </td>
+          <td class="summary-box" style="background:#fdeaea; color:#b94d4d;">
+            <span class="summary-number">${pendientes}</span>
+            <span class="summary-label">Pendientes</span>
+          </td>
+          <td class="summary-box" style="background:#fff4e1; color:#b97717;">
+            <span class="summary-number">${enProceso}</span>
+            <span class="summary-label">En proceso</span>
+          </td>
+          <td class="summary-box" style="background:#e7f6ea; color:#2f8534;">
+            <span class="summary-number">${resueltas}</span>
+            <span class="summary-label">Resueltas</span>
+          </td>
+          <td class="summary-box" style="background:#eef6fb;">
+            <span class="summary-number">${escapeHtml(categoriaPredominante)}</span>
+            <span class="summary-label">Categoría predominante</span>
+          </td>
         </tr>
       </table>
 
