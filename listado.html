@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoRegistro | Centro de Reportes</title>
+
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0b7c70" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+
+  <link rel="stylesheet" href="./style-listado.css" />
+</head>
+<body>
+  <div class="report-shell">
+    <header class="report-topbar">
+      <div class="report-brand">
+        <div class="brand-mini">GR</div>
+        <div>
+          <h1>GeoRegistro</h1>
+          <p>Centro de reportes y exportación</p>
+        </div>
+      </div>
+
+      <div class="report-topbar-actions">
+        <button class="btn btn-secondary" type="button" onclick="window.location.href='./index.html'">
+          Volver al mapa
+        </button>
+        <button id="btnExportarCSV" class="btn btn-primary" type="button">
+          Exportar CSV
+        </button>
+      </div>
+    </header>
+
+    <section class="report-filters">
+      <div class="field">
+        <label for="buscar">Buscar</label>
+        <input id="buscar" type="text" placeholder="Folio, categoría, dirección, inspector..." />
+      </div>
+
+      <div class="field">
+        <label for="periodo">Período</label>
+        <select id="periodo">
+          <option>Últimos 7 días</option>
+          <option>Últimos 30 días</option>
+          <option>Este mes</option>
+          <option>Todo</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="categoria">Categoría</label>
+        <select id="categoria">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="estado">Estado</label>
+        <select id="estado">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="resuelto">Resuelto</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="sector">Sector</label>
+        <select id="sector">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="inspector">Inspector</label>
+        <select id="inspector">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <button id="btnAplicarFiltros" class="btn btn-primary" type="button">
+        Aplicar filtros
+      </button>
+    </section>
+
+    <section class="report-card">
+      <div class="report-card-header">
+        <h2>Listado completo de incidencias</h2>
+        <span id="reportMeta" class="meta">Cargando datos...</span>
+      </div>
+
+      <div class="report-table-wrapper">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Dirección / Sector</th>
+              <th>Inspector</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Lat</th>
+              <th>Lng</th>
+            </tr>
+          </thead>
+          <tbody id="tablaListadoBody">
+            <tr>
+              <td colspan="9">Cargando incidencias...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./js/listado.js"></script>
+</body>
+</html>
