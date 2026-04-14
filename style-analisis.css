@@ -166,3 +166,71 @@ button, input, select { font: inherit; }
 .neutro{
     color:#64748b;
 }
+
+.alertas-card {
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.alertas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.alerta-item {
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.alerta-item strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.alerta-item p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.alerta-critica {
+  background: #fff1f1;
+  border-color: #f2c7c7;
+}
+
+.alerta-critica strong {
+  color: #b94d4d;
+}
+
+.alerta-media {
+  background: #fff8eb;
+  border-color: #f0d9ab;
+}
+
+.alerta-media strong {
+  color: #b97717;
+}
+
+.alerta-info {
+  background: #eef6fb;
+  border-color: #cfe1ef;
+}
+
+.alerta-info strong {
+  color: #2b5f87;
+}
+
+@media (max-width: 1100px) {
+  .alertas-grid {
+    grid-template-columns: 1fr;
+  }
+}
