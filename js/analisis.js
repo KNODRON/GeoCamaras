@@ -34,6 +34,9 @@ const varSeguridad = document.getElementById("varSeguridad");
 const proyeccionPeriodo = document.getElementById("proyeccionPeriodo");
 
 const contenedorAlertas = document.getElementById("contenedorAlertas");
+const franjaCritica = document.getElementById("franjaCritica");
+const franjaCriticaDetalle = document.getElementById("franjaCriticaDetalle");
+const lecturaHoraria = document.getElementById("lecturaHoraria");
 /* ==========================
    VARIABLES
 ========================== */
@@ -44,6 +47,8 @@ let mapLayer = null;
 let chartCategorias = null;
 let chartEstados = null;
 let chartTendencia = null;
+
+let chartHorarios = null;
 
 /* ==========================
    PESOS SAIT / MULTICRITERIO
@@ -278,6 +283,7 @@ function renderAnalisis() {
   renderChartCategorias(registros);
   renderChartEstados(registros);
   renderChartTendencia(registros);
+  renderChartHorarios(registros);
 
   renderTablaSectores(sectores);
   renderMapa(sectores);
@@ -793,4 +799,97 @@ function renderAlertas(registros, sectores) {
       <p>${alerta.texto}</p>
     </article>
   `).join("");
+}
+
+function renderChartHorarios(registros) {
+  const canvas = document.getElementById("chartHorarios");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const franjas = {
+    "00:00 - 06:00": 0,
+    "06:00 - 12:00": 0,
+    "12:00 - 18:00": 0,
+    "18:00 - 00:00": 0
+  };
+
+  registros.forEach(item => {
+    const fecha = getFechaDate(item.fecha);
+    if (!fecha) return;
+
+    const hora = fecha.getHours();
+
+    if (hora >= 0 && hora < 6) {
+      franjas["00:00 - 06:00"]++;
+    } else if (hora >= 6 && hora < 12) {
+      franjas["06:00 - 12:00"]++;
+    } else if (hora >= 12 && hora < 18) {
+      franjas["12:00 - 18:00"]++;
+    } else {
+      franjas["18:00 - 00:00"]++;
+    }
+  });
+
+  const labels = Object.keys(franjas);
+  const data = Object.values(franjas);
+
+  if (chartHorarios) {
+    chartHorarios.destroy();
+  }
+
+  chartHorarios = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Incidencias",
+        data,
+        backgroundColor: [
+          "#64748b",
+          "#18a38d",
+          "#f2a33a",
+          "#d65c5c"
+        ],
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+
+  const top = Object.entries(franjas).sort((a, b) => b[1] - a[1])[0];
+
+  if (!top) return;
+
+  const [franja, total] = top;
+
+  if (franjaCritica) {
+    franjaCritica.textContent = franja;
+  }
+
+  if (franjaCriticaDetalle) {
+    franjaCriticaDetalle.textContent = `${total} incidencias concentradas en esta franja`;
+  }
+
+  if (lecturaHoraria) {
+    lecturaHoraria.innerHTML = `
+      <strong>Lectura operativa:</strong> la mayor concentración territorial se registra en la franja
+      <strong>${franja}</strong>, con <strong>${total}</strong> incidencias dentro del período filtrado.
+      Esto sugiere reforzar monitoreo, patrullaje preventivo o supervisión focalizada en ese tramo horario.
+    `;
+  }
 }
