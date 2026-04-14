@@ -1,6 +1,11 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ==========================
    ELEMENTOS UI
@@ -16,6 +21,9 @@ const kpiTotal = document.getElementById("kpiTotal");
 const kpiPendientes = document.getElementById("kpiPendientes");
 const kpiCriticos = document.getElementById("kpiCriticos");
 const kpiReincidencias = document.getElementById("kpiReincidencias");
+const kpiTendencia = document.getElementById("kpiTendencia");
+const kpiTendenciaDetalle = document.getElementById("kpiTendenciaDetalle");
+const kpiCategoria = document.getElementById("kpiCategoria");
 
 const rankingMeta = document.getElementById("rankingMeta");
 const tablaTopSectores = document.getElementById("tablaTopSectores");
@@ -32,374 +40,688 @@ let allIncidencias = [];
 let mapAnalisis = null;
 let mapLayer = null;
 
+let chartCategorias = null;
+let chartEstados = null;
+let chartTendencia = null;
+
 /* ==========================
    PESOS SAIT / MULTICRITERIO
 ========================== */
 const PESOS = {
-    "Seguridad": 3,
-    "Alumbrado": 2,
-    "Infraestructura": 2,
-    "Basura": 1,
-    "Áreas Verdes": 1,
-    "Zoonosis": 1
+  "Seguridad": 3,
+  "Alumbrado": 2,
+  "Infraestructura": 2,
+  "Basura": 1,
+  "Áreas Verdes": 1,
+  "Zoonosis": 1
 };
 
 const ESTADO_FACTOR = {
-    "pendiente": 1.5,
-    "en_proceso": 1,
-    "resuelto": 0.3
+  "pendiente": 1.5,
+  "en_proceso": 1,
+  "resuelto": 0.3
 };
 
 /* ==========================
    LOGIN / VALIDACIÓN
 ========================== */
 onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "./login.html";
+    return;
+  }
 
-    if (!user) {
-        window.location.href = "./login.html";
-        return;
+  try {
+    const ref = doc(db, "usuarios", user.uid);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      window.location.href = "./login.html";
+      return;
     }
 
-    try {
+    const profile = snap.data();
 
-        const ref = doc(db, "usuarios", user.uid);
-        const snap = await getDoc(ref);
-
-        if (!snap.exists()) {
-            window.location.href = "./login.html";
-            return;
-        }
-
-        const profile = snap.data();
-
-        if (!profile.activo || profile.rol !== "admin") {
-            window.location.href = "./login.html";
-            return;
-        }
-
-        usuarioEl.textContent = "Usuario: " + (profile.nombre || user.email);
-
-        initMap();
-
-        btnActualizar.addEventListener("click", renderAnalisis);
-
-        onSnapshot(collection(db, "incidencias"), (snapshot) => {
-
-            allIncidencias = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            llenarFiltros();
-            renderAnalisis();
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-        window.location.href = "./login.html";
-
+    if (!profile.activo || profile.rol !== "admin") {
+      window.location.href = "./login.html";
+      return;
     }
 
+    if (usuarioEl) {
+      usuarioEl.textContent = "Usuario: " + (profile.nombre || user.email);
+    }
+
+    initMap();
+
+    if (btnActualizar) {
+      btnActualizar.addEventListener("click", renderAnalisis);
+    }
+
+    onSnapshot(collection(db, "incidencias"), (snapshot) => {
+      allIncidencias = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+
+      llenarFiltros();
+      renderAnalisis();
+    });
+
+  } catch (error) {
+    console.error(error);
+    window.location.href = "./login.html";
+  }
 });
 
 /* ==========================
    LLENAR FILTROS
 ========================== */
 function llenarFiltros() {
+  if (!categoriaEl || !inspectorEl) return;
 
-    const categorias = [...new Set(allIncidencias.map(i => i.categoria).filter(Boolean))];
-    const inspectores = [...new Set(allIncidencias.map(i => i.nombreUsuario).filter(Boolean))];
+  const categorias = [...new Set(allIncidencias.map(i => i.categoria).filter(Boolean))];
+  const inspectores = [...new Set(allIncidencias.map(i => i.nombreUsuario).filter(Boolean))];
 
-    categoriaEl.innerHTML =
-        '<option value="">Todas</option>' +
-        categorias.map(c => `<option value="${c}">${c}</option>`).join("");
+  categoriaEl.innerHTML =
+    '<option value="">Todas</option>' +
+    categorias.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 
-    inspectorEl.innerHTML =
-        '<option value="">Todos</option>' +
-        inspectores.map(i => `<option value="${i}">${i}</option>`).join("");
-
+  inspectorEl.innerHTML =
+    '<option value="">Todos</option>' +
+    inspectores.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join("");
 }
 
 /* ==========================
    FECHA FIREBASE
 ========================== */
 function getFechaDate(fecha) {
+  if (!fecha) return null;
 
-    if (!fecha) return null;
+  if (typeof fecha.toDate === "function") {
+    return fecha.toDate();
+  }
 
-    if (typeof fecha.toDate === "function") {
-        return fecha.toDate();
-    }
+  const d = new Date(fecha);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
-    return new Date(fecha);
+/* ==========================
+   HELPERS
+========================== */
+function escapeHtml(text) {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
+function getDiasFiltro() {
+  const dias = Number(periodoEl?.value || 7);
+  return Number.isNaN(dias) ? 7 : dias;
 }
 
 /* ==========================
    FILTRAR INCIDENCIAS
 ========================== */
 function filtrarIncidencias() {
+  const dias = getDiasFiltro();
+  const categoria = categoriaEl?.value || "";
+  const estado = estadoEl?.value || "";
+  const inspector = inspectorEl?.value || "";
 
-    const dias = Number(periodoEl.value);
-    const categoria = categoriaEl.value;
-    const estado = estadoEl.value;
-    const inspector = inspectorEl.value;
+  return allIncidencias.filter(item => {
+    const fecha = getFechaDate(item.fecha);
 
-    return allIncidencias.filter(item => {
+    if (dias > 0 && fecha) {
+      const limite = new Date();
+      limite.setHours(0, 0, 0, 0);
+      limite.setDate(limite.getDate() - dias);
 
-        const fecha = getFechaDate(item.fecha);
+      if (fecha < limite) return false;
+    }
 
-        if (dias > 0) {
+    if (categoria && item.categoria !== categoria) return false;
+    if (estado && item.estado !== estado) return false;
+    if (inspector && item.nombreUsuario !== inspector) return false;
 
-            const limite = new Date();
-            limite.setDate(limite.getDate() - dias);
-
-            if (fecha < limite) return false;
-
-        }
-
-        if (categoria && item.categoria !== categoria) return false;
-        if (estado && item.estado !== estado) return false;
-        if (inspector && item.nombreUsuario !== inspector) return false;
-
-        return true;
-
-    });
-
+    return true;
+  });
 }
 
 /* ==========================
    AGRUPAR POR SECTOR
 ========================== */
 function agruparPorSector(registros) {
+  const sectores = {};
 
-    const sectores = {};
+  registros.forEach(item => {
+    if (typeof item.lat !== "number" || typeof item.lng !== "number") return;
 
-    registros.forEach(item => {
+    const key = item.lat.toFixed(4) + "_" + item.lng.toFixed(4);
 
-        const key =
-            item.lat.toFixed(4) + "_" +
-            item.lng.toFixed(4);
+    if (!sectores[key]) {
+      sectores[key] = {
+        nombre: `Cuadrícula ${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}`,
+        total: 0,
+        score: 0,
+        categorias: {},
+        lat: item.lat,
+        lng: item.lng
+      };
+    }
 
-        if (!sectores[key]) {
+    sectores[key].total++;
 
-            sectores[key] = {
-                nombre: `Cuadrícula ${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}`,
-                total: 0,
-                score: 0,
-                categorias: {},
-                lat: item.lat,
-                lng: item.lng
-            };
+    sectores[key].categorias[item.categoria] =
+      (sectores[key].categorias[item.categoria] || 0) + 1;
 
-        }
+    sectores[key].score +=
+      (PESOS[item.categoria] || 1) *
+      (ESTADO_FACTOR[item.estado] || 1);
+  });
 
-        sectores[key].total++;
-
-        sectores[key].categorias[item.categoria] =
-            (sectores[key].categorias[item.categoria] || 0) + 1;
-
-        sectores[key].score +=
-            (PESOS[item.categoria] || 1) *
-            (ESTADO_FACTOR[item.estado] || 1);
-
-    });
-
-    return Object.values(sectores).map(s => ({
-
-        ...s,
-
-        indice: Math.min(100, Math.round(s.score * 8)),
-
-        categoriaDominante:
-            Object.entries(s.categorias)
-                .sort((a, b) => b[1] - a[1])[0][0]
-
-    })).sort((a, b) => b.indice - a.indice);
-
+  return Object.values(sectores)
+    .map(s => ({
+      ...s,
+      indice: Math.min(100, Math.round(s.score * 8)),
+      categoriaDominante:
+        Object.entries(s.categorias).sort((a, b) => b[1] - a[1])[0]?.[0] || "Sin categoría"
+    }))
+    .sort((a, b) => b.indice - a.indice);
 }
 
 /* ==========================
    RENDER GENERAL
 ========================== */
 function renderAnalisis() {
+  const registros = filtrarIncidencias();
+  const sectores = agruparPorSector(registros);
 
-    const registros = filtrarIncidencias();
-    const sectores = agruparPorSector(registros);
-
+  if (kpiTotal) {
     kpiTotal.textContent = registros.length;
+  }
 
+  if (kpiPendientes) {
     kpiPendientes.textContent =
-        registros.filter(i => i.estado === "pendiente").length;
+      registros.filter(i => i.estado === "pendiente").length;
+  }
 
+  if (kpiCriticos) {
     kpiCriticos.textContent =
-        sectores.filter(s => s.indice >= 75).length;
+      sectores.filter(s => s.indice >= 75).length;
+  }
 
+  if (kpiReincidencias) {
     kpiReincidencias.textContent =
-        sectores.filter(s => s.total >= 2).length;
+      sectores.filter(s => s.total >= 2).length;
+  }
 
-    renderTablaSectores(sectores);
-    renderMapa(sectores);
-    calcularComparativa(registros);
+  if (kpiCategoria) {
+    const categoriaDominanteGlobal =
+      Object.entries(contarPorCategoria(registros))
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+    kpiCategoria.textContent = categoriaDominanteGlobal;
+  }
 
+  if (kpiTendencia && kpiTendenciaDetalle) {
+    const tendencia = calcularTendenciaGeneral(registros);
+    kpiTendencia.textContent = tendencia.texto;
+    kpiTendencia.classList.remove("positivo", "negativo", "neutro");
+    kpiTendencia.classList.add(tendencia.clase);
+    kpiTendenciaDetalle.textContent = tendencia.detalle;
+  }
+
+  renderChartCategorias(registros);
+  renderChartEstados(registros);
+  renderChartTendencia(registros);
+
+  renderTablaSectores(sectores);
+  renderMapa(sectores);
+  calcularComparativa(registros);
+}
+
+/* ==========================
+   CONTAR POR CATEGORÍA
+========================== */
+function contarPorCategoria(registros) {
+  const conteo = {};
+
+  registros.forEach(item => {
+    const categoria = item.categoria || "Sin categoría";
+    conteo[categoria] = (conteo[categoria] || 0) + 1;
+  });
+
+  return conteo;
+}
+
+/* ==========================
+   TENDENCIA GENERAL KPI
+========================== */
+function calcularTendenciaGeneral(registrosActuales) {
+  const dias = getDiasFiltro();
+
+  if (dias <= 0) {
+    return {
+      texto: "—",
+      detalle: "Sin comparación aún",
+      clase: "neutro"
+    };
+  }
+
+  const hoy = new Date();
+
+  const inicioActual = new Date();
+  inicioActual.setDate(hoy.getDate() - dias);
+
+  const inicioAnterior = new Date();
+  inicioAnterior.setDate(hoy.getDate() - (dias * 2));
+
+  const finAnterior = new Date(inicioActual);
+
+  const periodoAnterior = allIncidencias.filter(i => {
+    const fecha = getFechaDate(i.fecha);
+    return fecha && fecha >= inicioAnterior && fecha < finAnterior;
+  });
+
+  const totalAnterior = periodoAnterior.length;
+  const totalActual = registrosActuales.length;
+
+  if (totalAnterior === 0 && totalActual === 0) {
+    return {
+      texto: "Estable",
+      detalle: "Sin variación detectable",
+      clase: "neutro"
+    };
+  }
+
+  if (totalAnterior === 0 && totalActual > 0) {
+    return {
+      texto: "Al alza",
+      detalle: "No existe base anterior comparable",
+      clase: "negativo"
+    };
+  }
+
+  const variacion = ((totalActual - totalAnterior) / totalAnterior) * 100;
+
+  if (variacion > 5) {
+    return {
+      texto: "Al alza",
+      detalle: `${variacion.toFixed(1)}% respecto al período anterior`,
+      clase: "negativo"
+    };
+  }
+
+  if (variacion < -5) {
+    return {
+      texto: "A la baja",
+      detalle: `${Math.abs(variacion).toFixed(1)}% respecto al período anterior`,
+      clase: "positivo"
+    };
+  }
+
+  return {
+    texto: "Estable",
+    detalle: "Variación menor al 5%",
+    clase: "neutro"
+  };
 }
 
 /* ==========================
    TABLA TOP SECTORES
 ========================== */
 function renderTablaSectores(sectores) {
+  if (rankingMeta) {
+    rankingMeta.textContent = sectores.length + " sectores analizados";
+  }
 
-    rankingMeta.textContent =
-        sectores.length + " sectores analizados";
+  if (!tablaTopSectores) return;
 
-    tablaTopSectores.innerHTML =
-        sectores.slice(0, 10).map(s => `
-            <tr>
-                <td>${s.nombre}</td>
-                <td>${s.indice}</td>
-                <td>${s.total}</td>
-                <td>${s.categoriaDominante}</td>
-                <td>${s.score.toFixed(1)}</td>
-                <td>${s.indice >= 75 ? "Crítico" : "Normal"}</td>
-            </tr>
-        `).join("");
-
-    if (sectores[0]) {
-
-        lecturaAutomatica.innerHTML = `
-            <b>${sectores[0].nombre}</b> presenta actualmente
-            el mayor índice territorial con valor de
-            <b>${sectores[0].indice}</b>,
-            predominando la categoría
-            <b>${sectores[0].categoriaDominante}</b>.
-        `;
-
+  if (!sectores.length) {
+    tablaTopSectores.innerHTML = `
+      <tr>
+        <td colspan="6">No hay datos suficientes para el análisis.</td>
+      </tr>
+    `;
+    if (lecturaAutomatica) {
+      lecturaAutomatica.textContent = "No hay información suficiente para generar lectura automática.";
     }
+    return;
+  }
 
+  tablaTopSectores.innerHTML = sectores.slice(0, 10).map(s => `
+    <tr>
+      <td>${s.nombre}</td>
+      <td>${s.indice}</td>
+      <td>${getPrioridadTexto(s.indice)}</td>
+      <td>${s.total >= 2 ? "Sí" : "No"}</td>
+      <td>${s.categoriaDominante}</td>
+      <td>${getTendenciaTexto(s.total)}</td>
+    </tr>
+  `).join("");
+
+  if (lecturaAutomatica && sectores[0]) {
+    lecturaAutomatica.innerHTML = `
+      <b>${sectores[0].nombre}</b> presenta actualmente
+      el mayor índice territorial con valor de
+      <b>${sectores[0].indice}</b>,
+      predominando la categoría
+      <b>${sectores[0].categoriaDominante}</b>.
+    `;
+  }
+}
+
+function getPrioridadTexto(indice) {
+  if (indice >= 75) return "Crítico";
+  if (indice >= 50) return "Alto";
+  if (indice >= 25) return "Medio";
+  return "Normal";
+}
+
+function getTendenciaTexto(total) {
+  if (total >= 4) return "Al alza";
+  if (total >= 2) return "Normal";
+  return "Baja";
 }
 
 /* ==========================
    MAPA
 ========================== */
 function initMap() {
+  const mapEl = document.getElementById("mapAnalisis");
+  if (!mapEl) return;
 
-    mapAnalisis = L.map("mapAnalisis").setView(
-        [-33.45, -70.65],
-        12
-    );
+  mapAnalisis = L.map("mapAnalisis").setView(
+    [-33.45, -70.65],
+    12
+  );
 
-    L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-            attribution: "&copy; OpenStreetMap"
-        }
-    ).addTo(mapAnalisis);
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: "&copy; OpenStreetMap"
+    }
+  ).addTo(mapAnalisis);
 
-    mapLayer = L.layerGroup().addTo(mapAnalisis);
-
+  mapLayer = L.layerGroup().addTo(mapAnalisis);
 }
 
 /* ==========================
    RENDER MAPA
 ========================== */
 function renderMapa(sectores) {
+  if (!mapLayer) return;
 
-    mapLayer.clearLayers();
+  mapLayer.clearLayers();
 
-    sectores.slice(0, 5).forEach(s => {
-
-        L.circleMarker(
-            [s.lat, s.lng],
-            {
-                radius: 10,
-                color: s.indice >= 75 ? "red" : "orange"
-            }
-        )
-        .bindPopup(`
-            ${s.nombre}<br>
-            Índice: ${s.indice}
-        `)
-        .addTo(mapLayer);
-
-    });
-
+  sectores.slice(0, 5).forEach(s => {
+    L.circleMarker(
+      [s.lat, s.lng],
+      {
+        radius: 10,
+        color: s.indice >= 75 ? "red" : s.indice >= 50 ? "orange" : "#0b7c70",
+        fillColor: s.indice >= 75 ? "red" : s.indice >= 50 ? "orange" : "#18a38d",
+        fillOpacity: 0.8,
+        weight: 2
+      }
+    )
+      .bindPopup(`
+        <b>${s.nombre}</b><br>
+        Índice: ${s.indice}<br>
+        Categoría dominante: ${s.categoriaDominante}
+      `)
+      .addTo(mapLayer);
+  });
 }
 
-function calcularComparativa(registrosActuales){
+/* ==========================
+   COMPARATIVA TEMPORAL
+========================== */
+function calcularComparativa(registrosActuales) {
+  if (!varGeneral || !varSeguridad || !proyeccionPeriodo) return;
 
-    const dias = Number(periodoEl.value);
+  const dias = getDiasFiltro();
 
-    if(dias <= 0) return;
+  if (dias <= 0) {
+    varGeneral.textContent = "--";
+    varSeguridad.textContent = "--";
+    proyeccionPeriodo.textContent = "--";
+    return;
+  }
 
-    const hoy = new Date();
+  const hoy = new Date();
 
-    const inicioActual = new Date();
-    inicioActual.setDate(hoy.getDate()-dias);
+  const inicioActual = new Date();
+  inicioActual.setDate(hoy.getDate() - dias);
 
-    const inicioAnterior = new Date();
-    inicioAnterior.setDate(hoy.getDate()-(dias*2));
+  const inicioAnterior = new Date();
+  inicioAnterior.setDate(hoy.getDate() - (dias * 2));
 
-    const finAnterior = new Date(inicioActual);
+  const finAnterior = new Date(inicioActual);
 
-    const periodoAnterior = allIncidencias.filter(i=>{
+  const periodoAnterior = allIncidencias.filter(i => {
+    const fecha = getFechaDate(i.fecha);
+    return fecha && fecha >= inicioAnterior && fecha < finAnterior;
+  });
 
-        const fecha = getFechaDate(i.fecha);
+  const totalAnterior = periodoAnterior.length;
+  const totalActual = registrosActuales.length;
 
-        return fecha >= inicioAnterior && fecha < finAnterior;
+  let variacion = 0;
 
-    });
+  if (totalAnterior > 0) {
+    variacion = ((totalActual - totalAnterior) / totalAnterior) * 100;
+  }
 
-    const totalAnterior = periodoAnterior.length;
-    const totalActual = registrosActuales.length;
+  varGeneral.textContent = `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
+  varGeneral.className = "";
+  varGeneral.classList.add(
+    variacion > 0 ? "negativo" :
+    variacion < 0 ? "positivo" :
+    "neutro"
+  );
 
-    let variacion = 0;
+  const segActual =
+    registrosActuales.filter(i => i.categoria === "Seguridad").length;
 
-    if(totalAnterior > 0){
+  const segAnterior =
+    periodoAnterior.filter(i => i.categoria === "Seguridad").length;
 
-        variacion = (((totalActual-totalAnterior)/totalAnterior)*100);
+  let varSeg = 0;
 
-    }
+  if (segAnterior > 0) {
+    varSeg = ((segActual - segAnterior) / segAnterior) * 100;
+  } else if (segActual > 0) {
+    varSeg = 100;
+  }
 
-    varGeneral.textContent =
-        `${variacion >= 0 ? "+" : ""}${variacion.toFixed(1)}%`;
+  varSeguridad.textContent = `${varSeg >= 0 ? "+" : ""}${varSeg.toFixed(1)}%`;
+  varSeguridad.className = "";
+  varSeguridad.classList.add(
+    varSeg > 0 ? "negativo" :
+    varSeg < 0 ? "positivo" :
+    "neutro"
+  );
 
-    varGeneral.className =
-        variacion > 0 ? "positivo" :
-        variacion < 0 ? "negativo" :
-        "neutro";
+  let proyeccion = totalActual;
 
-
-
-    const segActual =
-        registrosActuales.filter(i=>i.categoria==="Seguridad").length;
-
-    const segAnterior =
-        periodoAnterior.filter(i=>i.categoria==="Seguridad").length;
-
-    let varSeg = 0;
-
-    if(segAnterior > 0){
-
-        varSeg = (((segActual-segAnterior)/segAnterior)*100);
-
-    }
-
-    varSeguridad.textContent =
-        `${varSeg >= 0 ? "+" : ""}${varSeg.toFixed(1)}%`;
-
-    varSeguridad.className =
-        varSeg > 0 ? "positivo" :
-        varSeg < 0 ? "negativo" :
-        "neutro";
-
-
-
-    let proyeccion = Math.round(
-        totalActual + ((variacion/100)*totalActual)
+  if (totalAnterior > 0) {
+    proyeccion = Math.max(
+      0,
+      Math.round(totalActual + ((variacion / 100) * totalActual))
     );
+  }
 
-    proyeccionPeriodo.textContent = proyeccion;
+  proyeccionPeriodo.textContent = proyeccion;
+}
 
+/* ==========================
+   GRÁFICO CATEGORÍAS
+========================== */
+function renderChartCategorias(registros) {
+  const canvas = document.getElementById("chartCategorias");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const conteo = contarPorCategoria(registros);
+
+  const labels = Object.keys(conteo);
+  const data = Object.values(conteo);
+
+  if (chartCategorias) {
+    chartCategorias.destroy();
+  }
+
+  chartCategorias = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Incidencias",
+        data,
+        backgroundColor: [
+          "#0b7c70",
+          "#18a38d",
+          "#43a047",
+          "#f2a33a",
+          "#d65c5c",
+          "#64748b"
+        ],
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
+}
+
+/* ==========================
+   GRÁFICO ESTADOS
+========================== */
+function renderChartEstados(registros) {
+  const canvas = document.getElementById("chartEstados");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const conteo = {
+    Pendiente: 0,
+    "En proceso": 0,
+    Resuelto: 0
+  };
+
+  registros.forEach(item => {
+    const estado = String(item.estado || "").toLowerCase();
+
+    if (estado === "pendiente") conteo["Pendiente"]++;
+    else if (estado === "en_proceso") conteo["En proceso"]++;
+    else if (estado === "resuelto") conteo["Resuelto"]++;
+  });
+
+  if (chartEstados) {
+    chartEstados.destroy();
+  }
+
+  chartEstados = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(conteo),
+      datasets: [{
+        data: Object.values(conteo),
+        backgroundColor: ["#d65c5c", "#f2a33a", "#43a047"],
+        borderColor: "#ffffff",
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      }
+    }
+  });
+}
+
+/* ==========================
+   GRÁFICO TENDENCIA
+========================== */
+function renderChartTendencia(registros) {
+  const canvas = document.getElementById("chartTendencia");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const dias = getDiasFiltro() || 7;
+  const hoy = new Date();
+  const mapaDias = {};
+
+  for (let i = dias - 1; i >= 0; i--) {
+    const fecha = new Date(hoy);
+    fecha.setDate(hoy.getDate() - i);
+    const key = fecha.toISOString().slice(0, 10);
+    mapaDias[key] = 0;
+  }
+
+  registros.forEach(item => {
+    const fecha = getFechaDate(item.fecha);
+    if (!fecha) return;
+
+    const key = fecha.toISOString().slice(0, 10);
+    if (mapaDias[key] !== undefined) {
+      mapaDias[key]++;
+    }
+  });
+
+  const labels = Object.keys(mapaDias).map(fecha => {
+    const partes = fecha.split("-");
+    return `${partes[2]}-${partes[1]}`;
+  });
+
+  const data = Object.values(mapaDias);
+
+  if (chartTendencia) {
+    chartTendencia.destroy();
+  }
+
+  chartTendencia = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Incidencias",
+        data,
+        borderColor: "#0b7c70",
+        backgroundColor: "rgba(24, 163, 141, 0.18)",
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointHoverRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
 }
