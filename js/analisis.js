@@ -33,6 +33,7 @@ const varGeneral = document.getElementById("varGeneral");
 const varSeguridad = document.getElementById("varSeguridad");
 const proyeccionPeriodo = document.getElementById("proyeccionPeriodo");
 
+const contenedorAlertas = document.getElementById("contenedorAlertas");
 /* ==========================
    VARIABLES
 ========================== */
@@ -281,6 +282,7 @@ function renderAnalisis() {
   renderTablaSectores(sectores);
   renderMapa(sectores);
   calcularComparativa(registros);
+  renderAlertas(registros, sectores);
 }
 
 /* ==========================
@@ -724,4 +726,71 @@ function renderChartTendencia(registros) {
       }
     }
   });
+}
+
+function renderAlertas(registros, sectores) {
+  if (!contenedorAlertas) return;
+
+  const alertas = [];
+
+  const pendientes = registros.filter(i => i.estado === "pendiente");
+  const enProceso = registros.filter(i => i.estado === "en_proceso");
+
+  if (pendientes.length >= 5) {
+    alertas.push({
+      tipo: "critica",
+      titulo: "Pendientes acumulados",
+      texto: `Se detectan ${pendientes.length} incidencias pendientes dentro del período analizado, lo que sugiere necesidad de seguimiento prioritario.`
+    });
+  }
+
+  const focoCritico = sectores.find(s => s.indice >= 50);
+  if (focoCritico) {
+    alertas.push({
+      tipo: "critica",
+      titulo: "Foco territorial prioritario",
+      texto: `${focoCritico.nombre} alcanza un índice territorial de ${focoCritico.indice}, con predominio de ${focoCritico.categoriaDominante}.`
+    });
+  }
+
+  const reincidente = sectores.find(s => s.total >= 3);
+  if (reincidente) {
+    alertas.push({
+      tipo: "media",
+      titulo: "Reincidencia detectada",
+      texto: `${reincidente.nombre} concentra ${reincidente.total} eventos en el período, lo que evidencia repetición territorial.`
+    });
+  }
+
+  const seguridad = registros.filter(i => i.categoria === "Seguridad").length;
+  if (seguridad >= 4) {
+    alertas.push({
+      tipo: "media",
+      titulo: "Aumento de eventos de seguridad",
+      texto: `La categoría Seguridad registra ${seguridad} incidencias en el período actual, por sobre el comportamiento esperado.`
+    });
+  }
+
+  if (enProceso.length >= 4) {
+    alertas.push({
+      tipo: "info",
+      titulo: "Casos en gestión",
+      texto: `Actualmente existen ${enProceso.length} incidencias en proceso, lo que indica carga operativa activa sobre el territorio.`
+    });
+  }
+
+  if (!alertas.length) {
+    alertas.push({
+      tipo: "info",
+      titulo: "Sin alertas críticas",
+      texto: "No se detectan focos anómalos relevantes para el período seleccionado. El comportamiento territorial se mantiene dentro de rangos normales."
+    });
+  }
+
+  contenedorAlertas.innerHTML = alertas.slice(0, 6).map(alerta => `
+    <article class="alerta-item alerta-${alerta.tipo}">
+      <strong>${alerta.titulo}</strong>
+      <p>${alerta.texto}</p>
+    </article>
+  `).join("");
 }
