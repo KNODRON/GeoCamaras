@@ -321,3 +321,21 @@ button, input, select { font: inherit; }
   padding: 16px;
   height: 320px;
 }
+
+.btn-ver-foco {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #d7dde3;
+  background: #ffffff;
+  color: #1f2a33;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.btn-ver-foco:hover {
+  background: #0b7c70;
+  color: #ffffff;
+  border-color: #0b7c70;
+}
