@@ -308,3 +308,16 @@ button, input, select { font: inherit; }
     height: 260px;
   }
 }
+
+.comparativa-categorias-card {
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.comparativa-categorias-wrap {
+  padding: 16px;
+  height: 320px;
+}
