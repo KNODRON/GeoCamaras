@@ -478,14 +478,14 @@ function renderMapa(sectores) {
   sectores.forEach(s => {
     if (typeof s.lat !== "number" || typeof s.lng !== "number") return;
 
-    const intensidad = Math.max(0.2, s.indice / 100);
+    const intensidad = Math.max(0.45, s.indice / 60);
     puntosHeat.push([s.lat, s.lng, intensidad]);
   });
 
   if (puntosHeat.length && typeof L.heatLayer === "function") {
     heatLayer = L.heatLayer(puntosHeat, {
-      radius: 28,
-      blur: 22,
+      radius: 40,
+      blur: 30,
       maxZoom: 17,
       gradient: {
         0.2: "#22c55e",
