@@ -52,6 +52,8 @@ let chartHorarios = null;
 let chartComparativaCategorias = null;
 let heatLayer = null;
 
+let topSectoresActuales = [];
+
 /* ==========================
    PESOS SAIT / MULTICRITERIO
 ========================== */
@@ -391,10 +393,12 @@ function renderTablaSectores(sectores) {
 
   if (!tablaTopSectores) return;
 
+  topSectoresActuales = sectores.slice(0, 10);
+
   if (!sectores.length) {
     tablaTopSectores.innerHTML = `
       <tr>
-        <td colspan="6">No hay datos suficientes para el análisis.</td>
+        <td colspan="7">No hay datos suficientes para el análisis.</td>
       </tr>
     `;
     if (lecturaAutomatica) {
@@ -403,7 +407,7 @@ function renderTablaSectores(sectores) {
     return;
   }
 
-  tablaTopSectores.innerHTML = sectores.slice(0, 10).map(s => `
+  tablaTopSectores.innerHTML = topSectoresActuales.map((s, index) => `
     <tr>
       <td>${s.nombre}</td>
       <td>${s.indice}</td>
@@ -411,6 +415,15 @@ function renderTablaSectores(sectores) {
       <td>${s.total >= 2 ? "Sí" : "No"}</td>
       <td>${s.categoriaDominante}</td>
       <td>${getTendenciaTexto(s.total)}</td>
+      <td>
+        <button
+          class="btn-ver-foco"
+          type="button"
+          onclick="verSectorEnMapa(${index})"
+        >
+          Ver
+        </button>
+      </td>
     </tr>
   `).join("");
 
@@ -1009,3 +1022,27 @@ function renderChartComparativaCategorias(registrosActuales) {
     }
   });
 }
+
+function verSectorEnMapa(index) {
+  if (!mapAnalisis || !topSectoresActuales[index]) return;
+
+  const sector = topSectoresActuales[index];
+
+  if (typeof sector.lat !== "number" || typeof sector.lng !== "number") return;
+
+  mapAnalisis.setView([sector.lat, sector.lng], 17);
+
+  const popupHtml = `
+    <b>${sector.nombre}</b><br>
+    Índice: ${sector.indice}<br>
+    Categoría dominante: ${sector.categoriaDominante}<br>
+    Prioridad: ${getPrioridadTexto(sector.indice)}
+  `;
+
+  L.popup()
+    .setLatLng([sector.lat, sector.lng])
+    .setContent(popupHtml)
+    .openOn(mapAnalisis);
+}
+
+window.verSectorEnMapa = verSectorEnMapa;
