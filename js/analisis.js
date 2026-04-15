@@ -49,6 +49,7 @@ let chartEstados = null;
 let chartTendencia = null;
 
 let chartHorarios = null;
+let chartComparativaCategorias = null;
 
 /* ==========================
    PESOS SAIT / MULTICRITERIO
@@ -284,6 +285,7 @@ function renderAnalisis() {
   renderChartEstados(registros);
   renderChartTendencia(registros);
   renderChartHorarios(registros);
+  renderChartComparativaCategorias(registros);
 
   renderTablaSectores(sectores);
   renderMapa(sectores);
@@ -892,4 +894,80 @@ function renderChartHorarios(registros) {
       Esto sugiere reforzar monitoreo, patrullaje preventivo o supervisión focalizada en ese tramo horario.
     `;
   }
+}
+
+function renderChartComparativaCategorias(registrosActuales) {
+  const canvas = document.getElementById("chartComparativaCategorias");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const dias = getDiasFiltro();
+  if (dias <= 0) return;
+
+  const hoy = new Date();
+
+  const inicioActual = new Date();
+  inicioActual.setDate(hoy.getDate() - dias);
+
+  const inicioAnterior = new Date();
+  inicioAnterior.setDate(hoy.getDate() - (dias * 2));
+
+  const finAnterior = new Date(inicioActual);
+
+  const periodoAnterior = allIncidencias.filter(i => {
+    const fecha = getFechaDate(i.fecha);
+    return fecha && fecha >= inicioAnterior && fecha < finAnterior;
+  });
+
+  const actual = contarPorCategoria(registrosActuales);
+  const anterior = contarPorCategoria(periodoAnterior);
+
+  const categorias = [...new Set([
+    ...Object.keys(actual),
+    ...Object.keys(anterior)
+  ])];
+
+  const actualData = categorias.map(cat => actual[cat] || 0);
+  const anteriorData = categorias.map(cat => anterior[cat] || 0);
+
+  if (chartComparativaCategorias) {
+    chartComparativaCategorias.destroy();
+  }
+
+  chartComparativaCategorias = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: categorias,
+      datasets: [
+        {
+          label: "Período actual",
+          data: actualData,
+          backgroundColor: "#0b7c70",
+          borderRadius: 8
+        },
+        {
+          label: "Período anterior",
+          data: anteriorData,
+          backgroundColor: "#cbd5e1",
+          borderRadius: 8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
 }
