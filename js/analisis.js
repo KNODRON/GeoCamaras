@@ -50,6 +50,7 @@ let chartTendencia = null;
 
 let chartHorarios = null;
 let chartComparativaCategorias = null;
+let heatLayer = null;
 
 /* ==========================
    PESOS SAIT / MULTICRITERIO
@@ -463,28 +464,65 @@ function initMap() {
    RENDER MAPA
 ========================== */
 function renderMapa(sectores) {
-  if (!mapLayer) return;
+  if (!mapLayer || !mapAnalisis) return;
 
   mapLayer.clearLayers();
+
+  if (heatLayer) {
+    mapAnalisis.removeLayer(heatLayer);
+    heatLayer = null;
+  }
+
+  const puntosHeat = [];
+
+  sectores.forEach(s => {
+    if (typeof s.lat !== "number" || typeof s.lng !== "number") return;
+
+    const intensidad = Math.max(0.2, s.indice / 100);
+    puntosHeat.push([s.lat, s.lng, intensidad]);
+  });
+
+  if (puntosHeat.length && typeof L.heatLayer === "function") {
+    heatLayer = L.heatLayer(puntosHeat, {
+      radius: 28,
+      blur: 22,
+      maxZoom: 17,
+      gradient: {
+        0.2: "#22c55e",
+        0.45: "#facc15",
+        0.7: "#f97316",
+        1.0: "#dc2626"
+      }
+    }).addTo(mapAnalisis);
+  }
 
   sectores.slice(0, 5).forEach(s => {
     L.circleMarker(
       [s.lat, s.lng],
       {
-        radius: 10,
-        color: s.indice >= 75 ? "red" : s.indice >= 50 ? "orange" : "#0b7c70",
-        fillColor: s.indice >= 75 ? "red" : s.indice >= 50 ? "orange" : "#18a38d",
-        fillOpacity: 0.8,
+        radius: 8,
+        color: s.indice >= 75 ? "#dc2626" : s.indice >= 50 ? "#f97316" : "#0b7c70",
+        fillColor: s.indice >= 75 ? "#dc2626" : s.indice >= 50 ? "#f97316" : "#18a38d",
+        fillOpacity: 0.9,
         weight: 2
       }
     )
       .bindPopup(`
         <b>${s.nombre}</b><br>
         Índice: ${s.indice}<br>
-        Categoría dominante: ${s.categoriaDominante}
+        Categoría dominante: ${s.categoriaDominante}<br>
+        Prioridad: ${getPrioridadTexto(s.indice)}
       `)
       .addTo(mapLayer);
   });
+
+  const coords = sectores
+    .filter(s => typeof s.lat === "number" && typeof s.lng === "number")
+    .map(s => [s.lat, s.lng]);
+
+  if (coords.length) {
+    mapAnalisis.fitBounds(coords, { padding: [20, 20] });
+  }
 }
 
 /* ==========================
