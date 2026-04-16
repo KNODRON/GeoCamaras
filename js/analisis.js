@@ -1100,85 +1100,121 @@ if (btnVerFocoPrincipal) {
 }
 
 async function exportarAnalisisPDF() {
-  if (!pdfPagina1 || !pdfPagina2 || !pdfPagina3) return;
-
-  try {
-    if (btnExportarAnalisisPDF) {
-      btnExportarAnalisisPDF.disabled = true;
-      btnExportarAnalisisPDF.textContent = "Generando PDF...";
-    }
-
-    document.body.classList.add("pdf-exporting");
-    window.scrollTo({ top: 0, behavior: "instant" });
-
-    await new Promise(resolve => setTimeout(resolve, 900));
-
     const { jsPDF } = window.jspdf;
+
     const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: "a4"
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
     });
 
-    const paginas = [pdfPagina1, pdfPagina2, pdfPagina3];
-    const margin = 8;
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const usableWidth = pageWidth - (margin * 2);
-    const usableHeight = pageHeight - (margin * 2);
+    const contenido = document.querySelector(".analisis-container");
 
-    for (let i = 0; i < paginas.length; i++) {
-      const bloque = paginas[i];
-      if (!bloque) continue;
+    if (!contenido) {
+        alert("No se encontró contenido de análisis.");
+        return;
+    }
 
-      const canvas = await html2canvas(bloque, {
+    const canvas = await html2canvas(contenido, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: -window.scrollY
-      });
+        backgroundColor: "#f8fafc"
+    });
 
-      const imgData = canvas.toDataURL("image/png");
+    const imgData = canvas.toDataURL("image/png");
 
-      const imgWidth = usableWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pdfWidth = 297;
+    const pdfHeight = 210;
 
-      let finalWidth = imgWidth;
-      let finalHeight = imgHeight;
+    const margen = 10;
 
-      if (finalHeight > usableHeight) {
-        const ratio = usableHeight / finalHeight;
-        finalWidth = finalWidth * ratio;
-        finalHeight = usableHeight;
-      }
+    const headerHeight = 18;
+    const footerHeight = 10;
 
-      const x = (pageWidth - finalWidth) / 2;
-      const y = margin;
+    const usableWidth = pdfWidth - (margen * 2);
+    const usableHeight = pdfHeight - headerHeight - footerHeight - (margen * 2);
 
-      if (i > 0) {
-        pdf.addPage();
-      }
+    const imgWidth = usableWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+    let heightLeft = imgHeight;
+    let position = 0;
+    let pagina = 1;
+
+    while (heightLeft > 0) {
+
+        if (pagina > 1) pdf.addPage();
+
+        /*
+        ======================
+        FONDO GRIS SUAVE
+        ======================
+        */
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(0, 0, pdfWidth, pdfHeight, "F");
+
+        /*
+        ======================
+        HEADER
+        ======================
+        */
+        pdf.setFillColor(15, 118, 110);
+        pdf.rect(0, 0, pdfWidth, 14, "F");
+
+        pdf.setTextColor(255,255,255);
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("GeoRegistro - Informe Ejecutivo Territorial", 12, 9);
+
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(
+            `Generado: ${new Date().toLocaleString("es-CL")} | Período: ${document.getElementById("filtroPeriodo")?.value || "N/A"}`,
+            12,
+            13
+        );
+
+        /*
+        ======================
+        IMAGEN CONTENIDO
+        ======================
+        */
+        pdf.addImage(
+            imgData,
+            "PNG",
+            margen,
+            headerHeight + margen + position,
+            imgWidth,
+            imgHeight
+        );
+
+        /*
+        ======================
+        FOOTER
+        ======================
+        */
+        pdf.setDrawColor(220);
+        pdf.line(10, 202, 287, 202);
+
+        pdf.setTextColor(100);
+        pdf.setFontSize(8);
+
+        pdf.text(
+            "Generado automáticamente por plataforma GeoRegistro",
+            12,
+            207
+        );
+
+        pdf.text(
+            `Página ${pagina}`,
+            270,
+            207
+        );
+
+        heightLeft -= usableHeight;
+        position -= usableHeight;
+        pagina++;
     }
 
-    const fecha = new Date();
-    const yyyy = fecha.getFullYear();
-    const mm = String(fecha.getMonth() + 1).padStart(2, "0");
-    const dd = String(fecha.getDate()).padStart(2, "0");
-
-    pdf.save(`georegistro_analisis_ejecutivo_${yyyy}-${mm}-${dd}.pdf`);
-
-  } catch (error) {
-    console.error("Error exportando PDF ejecutivo:", error);
-    alert("No se pudo generar el PDF ejecutivo.");
-  } finally {
-    document.body.classList.remove("pdf-exporting");
-
-    if (btnExportarAnalisisPDF) {
-      btnExportarAnalisisPDF.disabled = false;
-      btnExportarAnalisisPDF.textContent = "Exportar PDF";
-    }
-  }
+    pdf.save(`georegistro_analisis_ejecutivo_${new Date().toISOString().split("T")[0]}.pdf`);
 }
