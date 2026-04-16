@@ -23,11 +23,13 @@
       <div class="topbar-actions">
         <div class="pill">Comuna: Demo</div>
         <div class="pill" id="analisisUsuario">Usuario: --</div>
+        <button id="btnExportarAnalisisPDF" class="btn btn-secondary" type="button">Exportar Informe</button>
         <button class="btn btn-secondary" type="button" onclick="window.location.href='./index.html'">Volver al mapa</button>
         <button class="btn btn-primary" type="button" onclick="window.location.href='./listado.html'">Ir a listado</button>
       </div>
     </header>
 
+    <div id="pdfAnalisisWrap">
     <section class="filters-card">
       <div class="field">
         <label for="analisisPeriodo">Período</label>
@@ -194,10 +196,13 @@
       </article>
     </section>
   </div>
-
+</div>
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script type="module" src="./js/analisis.js"></script>
 </body>
 </html>
