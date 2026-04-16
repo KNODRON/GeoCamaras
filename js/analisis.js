@@ -452,6 +452,7 @@ if (sectores[0]) {
     btnVerFocoPrincipal.disabled = true;
   }
 }
+}
 
 function getPrioridadTexto(indice) {
   if (indice >= 75) return "Crítico";
