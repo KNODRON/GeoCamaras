@@ -1218,3 +1218,5 @@ async function exportarAnalisisPDF() {
 
     pdf.save(`georegistro_analisis_ejecutivo_${new Date().toISOString().split("T")[0]}.pdf`);
 }
+}
+
