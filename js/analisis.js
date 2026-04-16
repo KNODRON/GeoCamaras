@@ -38,6 +38,9 @@ const franjaCritica = document.getElementById("franjaCritica");
 const franjaCriticaDetalle = document.getElementById("franjaCriticaDetalle");
 const lecturaHoraria = document.getElementById("lecturaHoraria");
 const btnVerFocoPrincipal = document.getElementById("btnVerFocoPrincipal");
+
+const btnExportarAnalisisPDF = document.getElementById("btnExportarAnalisisPDF");
+const pdfAnalisisWrap = document.getElementById("pdfAnalisisWrap");
 /* ==========================
    VARIABLES
 ========================== */
@@ -123,6 +126,10 @@ onAuthStateChanged(auth, async (user) => {
     console.error(error);
     window.location.href = "./login.html";
   }
+
+  if (btnExportarAnalisisPDF) {
+  btnExportarAnalisisPDF.addEventListener("click", exportarAnalisisPDF);
+}
 });
 
 /* ==========================
@@ -1087,4 +1094,79 @@ function verFocoPrincipal() {
 
 if (btnVerFocoPrincipal) {
   btnVerFocoPrincipal.addEventListener("click", verFocoPrincipal);
+}
+
+async function exportarAnalisisPDF() {
+  if (!pdfAnalisisWrap) return;
+
+  try {
+    if (btnExportarAnalisisPDF) {
+      btnExportarAnalisisPDF.disabled = true;
+      btnExportarAnalisisPDF.textContent = "Generando PDF...";
+    }
+
+    document.body.classList.add("pdf-exporting");
+
+    window.scrollTo({ top: 0, behavior: "instant" });
+
+    await new Promise(resolve => setTimeout(resolve, 700));
+
+    const canvas = await html2canvas(pdfAnalisisWrap, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: -window.scrollY
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4"
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const margin = 8;
+    const usableWidth = pageWidth - (margin * 2);
+    const usableHeight = pageHeight - (margin * 2);
+
+    const imgWidth = usableWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = margin;
+
+    pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+    heightLeft -= usableHeight;
+
+    while (heightLeft > 0) {
+      pdf.addPage();
+      position = margin - (imgHeight - heightLeft);
+      pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+      heightLeft -= usableHeight;
+    }
+
+    const fecha = new Date();
+    const yyyy = fecha.getFullYear();
+    const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+    const dd = String(fecha.getDate()).padStart(2, "0");
+
+    pdf.save(`georegistro_analisis_${yyyy}-${mm}-${dd}.pdf`);
+
+  } catch (error) {
+    console.error("Error exportando PDF de análisis:", error);
+    alert("No se pudo generar el PDF.");
+  } finally {
+    document.body.classList.remove("pdf-exporting");
+
+    if (btnExportarAnalisisPDF) {
+      btnExportarAnalisisPDF.disabled = false;
+      btnExportarAnalisisPDF.textContent = "Exportar PDF";
+    }
+  }
 }
