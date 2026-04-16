@@ -40,24 +40,23 @@ const lecturaHoraria = document.getElementById("lecturaHoraria");
 const btnVerFocoPrincipal = document.getElementById("btnVerFocoPrincipal");
 
 const btnExportarAnalisisPDF = document.getElementById("btnExportarAnalisisPDF");
-const pdfAnalisisWrap = document.getElementById("pdfAnalisisWrap");
 const pdfPagina1 = document.getElementById("pdfPagina1");
 const pdfPagina2 = document.getElementById("pdfPagina2");
 const pdfPagina3 = document.getElementById("pdfPagina3");
+
 /* ==========================
    VARIABLES
 ========================== */
 let allIncidencias = [];
 let mapAnalisis = null;
 let mapLayer = null;
+let heatLayer = null;
 
 let chartCategorias = null;
 let chartEstados = null;
 let chartTendencia = null;
-
 let chartHorarios = null;
 let chartComparativaCategorias = null;
-let heatLayer = null;
 
 let topSectoresActuales = [];
 let focoPrincipalActual = null;
@@ -115,6 +114,14 @@ onAuthStateChanged(auth, async (user) => {
       btnActualizar.addEventListener("click", renderAnalisis);
     }
 
+    if (btnExportarAnalisisPDF) {
+      btnExportarAnalisisPDF.addEventListener("click", exportarAnalisisPDF);
+    }
+
+    if (btnVerFocoPrincipal) {
+      btnVerFocoPrincipal.addEventListener("click", verFocoPrincipal);
+    }
+
     onSnapshot(collection(db, "incidencias"), (snapshot) => {
       allIncidencias = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
@@ -124,15 +131,10 @@ onAuthStateChanged(auth, async (user) => {
       llenarFiltros();
       renderAnalisis();
     });
-
   } catch (error) {
-    console.error(error);
+    console.error("Error cargando análisis:", error);
     window.location.href = "./login.html";
   }
-
-  if (btnExportarAnalisisPDF) {
-  btnExportarAnalisisPDF.addEventListener("click", exportarAnalisisPDF);
-}
 });
 
 /* ==========================
@@ -141,8 +143,8 @@ onAuthStateChanged(auth, async (user) => {
 function llenarFiltros() {
   if (!categoriaEl || !inspectorEl) return;
 
-  const categorias = [...new Set(allIncidencias.map(i => i.categoria).filter(Boolean))];
-  const inspectores = [...new Set(allIncidencias.map(i => i.nombreUsuario).filter(Boolean))];
+  const categorias = [...new Set(allIncidencias.map(i => i.categoria).filter(Boolean))].sort();
+  const inspectores = [...new Set(allIncidencias.map(i => i.nombreUsuario).filter(Boolean))].sort();
 
   categoriaEl.innerHTML =
     '<option value="">Todas</option>' +
@@ -185,6 +187,30 @@ function getDiasFiltro() {
   return Number.isNaN(dias) ? 7 : dias;
 }
 
+function contarPorCategoria(registros) {
+  const conteo = {};
+
+  registros.forEach(item => {
+    const categoria = item.categoria || "Sin categoría";
+    conteo[categoria] = (conteo[categoria] || 0) + 1;
+  });
+
+  return conteo;
+}
+
+function getPrioridadTexto(indice) {
+  if (indice >= 75) return "Crítico";
+  if (indice >= 50) return "Alto";
+  if (indice >= 25) return "Medio";
+  return "Normal";
+}
+
+function getTendenciaTexto(total) {
+  if (total >= 4) return "Al alza";
+  if (total >= 2) return "Normal";
+  return "Baja";
+}
+
 /* ==========================
    FILTRAR INCIDENCIAS
 ========================== */
@@ -201,7 +227,6 @@ function filtrarIncidencias() {
       const limite = new Date();
       limite.setHours(0, 0, 0, 0);
       limite.setDate(limite.getDate() - dias);
-
       if (fecha < limite) return false;
     }
 
@@ -236,7 +261,6 @@ function agruparPorSector(registros) {
     }
 
     sectores[key].total++;
-
     sectores[key].categorias[item.categoria] =
       (sectores[key].categorias[item.categoria] || 0) + 1;
 
@@ -253,73 +277,6 @@ function agruparPorSector(registros) {
         Object.entries(s.categorias).sort((a, b) => b[1] - a[1])[0]?.[0] || "Sin categoría"
     }))
     .sort((a, b) => b.indice - a.indice);
-}
-
-/* ==========================
-   RENDER GENERAL
-========================== */
-function renderAnalisis() {
-  const registros = filtrarIncidencias();
-  const sectores = agruparPorSector(registros);
-
-  if (kpiTotal) {
-    kpiTotal.textContent = registros.length;
-  }
-
-  if (kpiPendientes) {
-    kpiPendientes.textContent =
-      registros.filter(i => i.estado === "pendiente").length;
-  }
-
-  if (kpiCriticos) {
-    kpiCriticos.textContent =
-      sectores.filter(s => s.indice >= 75).length;
-  }
-
-  if (kpiReincidencias) {
-    kpiReincidencias.textContent =
-      sectores.filter(s => s.total >= 2).length;
-  }
-
-  if (kpiCategoria) {
-    const categoriaDominanteGlobal =
-      Object.entries(contarPorCategoria(registros))
-        .sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
-    kpiCategoria.textContent = categoriaDominanteGlobal;
-  }
-
-  if (kpiTendencia && kpiTendenciaDetalle) {
-    const tendencia = calcularTendenciaGeneral(registros);
-    kpiTendencia.textContent = tendencia.texto;
-    kpiTendencia.classList.remove("positivo", "negativo", "neutro");
-    kpiTendencia.classList.add(tendencia.clase);
-    kpiTendenciaDetalle.textContent = tendencia.detalle;
-  }
-
-  renderChartCategorias(registros);
-  renderChartEstados(registros);
-  renderChartTendencia(registros);
-  renderChartHorarios(registros);
-  renderChartComparativaCategorias(registros);
-
-  renderTablaSectores(sectores);
-  renderMapa(sectores);
-  calcularComparativa(registros);
-  renderAlertas(registros, sectores);
-}
-
-/* ==========================
-   CONTAR POR CATEGORÍA
-========================== */
-function contarPorCategoria(registros) {
-  const conteo = {};
-
-  registros.forEach(item => {
-    const categoria = item.categoria || "Sin categoría";
-    conteo[categoria] = (conteo[categoria] || 0) + 1;
-  });
-
-  return conteo;
 }
 
 /* ==========================
@@ -396,6 +353,44 @@ function calcularTendenciaGeneral(registrosActuales) {
 }
 
 /* ==========================
+   RENDER GENERAL
+========================== */
+function renderAnalisis() {
+  const registros = filtrarIncidencias();
+  const sectores = agruparPorSector(registros);
+
+  if (kpiTotal) kpiTotal.textContent = registros.length;
+  if (kpiPendientes) kpiPendientes.textContent = registros.filter(i => i.estado === "pendiente").length;
+  if (kpiCriticos) kpiCriticos.textContent = sectores.filter(s => s.indice >= 75).length;
+  if (kpiReincidencias) kpiReincidencias.textContent = sectores.filter(s => s.total >= 2).length;
+
+  if (kpiCategoria) {
+    const categoriaDominanteGlobal =
+      Object.entries(contarPorCategoria(registros)).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+    kpiCategoria.textContent = categoriaDominanteGlobal;
+  }
+
+  if (kpiTendencia && kpiTendenciaDetalle) {
+    const tendencia = calcularTendenciaGeneral(registros);
+    kpiTendencia.textContent = tendencia.texto;
+    kpiTendencia.classList.remove("positivo", "negativo", "neutro");
+    kpiTendencia.classList.add(tendencia.clase);
+    kpiTendenciaDetalle.textContent = tendencia.detalle;
+  }
+
+  renderChartCategorias(registros);
+  renderChartEstados(registros);
+  renderChartTendencia(registros);
+  renderChartHorarios(registros);
+  renderChartComparativaCategorias(registros);
+
+  renderTablaSectores(sectores);
+  renderMapa(sectores);
+  calcularComparativa(registros);
+  renderAlertas(registros, sectores);
+}
+
+/* ==========================
    TABLA TOP SECTORES
 ========================== */
 function renderTablaSectores(sectores) {
@@ -413,9 +408,17 @@ function renderTablaSectores(sectores) {
         <td colspan="7">No hay datos suficientes para el análisis.</td>
       </tr>
     `;
+
+    focoPrincipalActual = null;
+
     if (lecturaAutomatica) {
       lecturaAutomatica.textContent = "No hay información suficiente para generar lectura automática.";
     }
+
+    if (btnVerFocoPrincipal) {
+      btnVerFocoPrincipal.disabled = true;
+    }
+
     return;
   }
 
@@ -439,42 +442,23 @@ function renderTablaSectores(sectores) {
     </tr>
   `).join("");
 
-if (sectores[0]) {
-  focoPrincipalActual = sectores[0];
+  if (sectores[0]) {
+    focoPrincipalActual = sectores[0];
 
-  if (lecturaAutomatica) {
-    lecturaAutomatica.innerHTML = `
-      <b>${sectores[0].nombre}</b> presenta actualmente
-      el mayor índice territorial con valor de
-      <b>${sectores[0].indice}</b>,
-      predominando la categoría
-      <b>${sectores[0].categoriaDominante}</b>.
-    `;
+    if (lecturaAutomatica) {
+      lecturaAutomatica.innerHTML = `
+        <b>${sectores[0].nombre}</b> presenta actualmente
+        el mayor índice territorial con valor de
+        <b>${sectores[0].indice}</b>,
+        predominando la categoría
+        <b>${sectores[0].categoriaDominante}</b>.
+      `;
+    }
+
+    if (btnVerFocoPrincipal) {
+      btnVerFocoPrincipal.disabled = false;
+    }
   }
-
-  if (btnVerFocoPrincipal) {
-    btnVerFocoPrincipal.disabled = false;
-  }
-} else {
-  focoPrincipalActual = null;
-
-  if (btnVerFocoPrincipal) {
-    btnVerFocoPrincipal.disabled = true;
-  }
-}
-}
-
-function getPrioridadTexto(indice) {
-  if (indice >= 75) return "Crítico";
-  if (indice >= 50) return "Alto";
-  if (indice >= 25) return "Medio";
-  return "Normal";
-}
-
-function getTendenciaTexto(total) {
-  if (total >= 4) return "Al alza";
-  if (total >= 2) return "Normal";
-  return "Baja";
 }
 
 /* ==========================
@@ -484,10 +468,7 @@ function initMap() {
   const mapEl = document.getElementById("mapAnalisis");
   if (!mapEl) return;
 
-  mapAnalisis = L.map("mapAnalisis").setView(
-    [-33.45, -70.65],
-    12
-  );
+  mapAnalisis = L.map("mapAnalisis").setView([-33.45, -70.65], 12);
 
   L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -499,9 +480,6 @@ function initMap() {
   mapLayer = L.layerGroup().addTo(mapAnalisis);
 }
 
-/* ==========================
-   RENDER MAPA
-========================== */
 function renderMapa(sectores) {
   if (!mapLayer || !mapAnalisis) return;
 
@@ -516,7 +494,6 @@ function renderMapa(sectores) {
 
   sectores.forEach(s => {
     if (typeof s.lat !== "number" || typeof s.lng !== "number") return;
-
     const intensidad = Math.max(0.45, s.indice / 60);
     puntosHeat.push([s.lat, s.lng, intensidad]);
   });
@@ -562,6 +539,53 @@ function renderMapa(sectores) {
   if (coords.length) {
     mapAnalisis.fitBounds(coords, { padding: [20, 20] });
   }
+}
+
+/* ==========================
+   NAVEGACIÓN DE FOCOS
+========================== */
+function verSectorEnMapa(index) {
+  if (!mapAnalisis || !topSectoresActuales[index]) return;
+
+  const sector = topSectoresActuales[index];
+  if (typeof sector.lat !== "number" || typeof sector.lng !== "number") return;
+
+  mapAnalisis.setView([sector.lat, sector.lng], 17);
+
+  const popupHtml = `
+    <b>${sector.nombre}</b><br>
+    Índice: ${sector.indice}<br>
+    Categoría dominante: ${sector.categoriaDominante}<br>
+    Prioridad: ${getPrioridadTexto(sector.indice)}
+  `;
+
+  L.popup()
+    .setLatLng([sector.lat, sector.lng])
+    .setContent(popupHtml)
+    .openOn(mapAnalisis);
+}
+
+window.verSectorEnMapa = verSectorEnMapa;
+
+function verFocoPrincipal() {
+  if (!mapAnalisis || !focoPrincipalActual) return;
+
+  const sector = focoPrincipalActual;
+  if (typeof sector.lat !== "number" || typeof sector.lng !== "number") return;
+
+  mapAnalisis.setView([sector.lat, sector.lng], 17);
+
+  const popupHtml = `
+    <b>${sector.nombre}</b><br>
+    Índice: ${sector.indice}<br>
+    Categoría dominante: ${sector.categoriaDominante}<br>
+    Prioridad: ${getPrioridadTexto(sector.indice)}
+  `;
+
+  L.popup()
+    .setLatLng([sector.lat, sector.lng])
+    .setContent(popupHtml)
+    .openOn(mapAnalisis);
 }
 
 /* ==========================
@@ -611,11 +635,8 @@ function calcularComparativa(registrosActuales) {
     "neutro"
   );
 
-  const segActual =
-    registrosActuales.filter(i => i.categoria === "Seguridad").length;
-
-  const segAnterior =
-    periodoAnterior.filter(i => i.categoria === "Seguridad").length;
+  const segActual = registrosActuales.filter(i => i.categoria === "Seguridad").length;
+  const segAnterior = periodoAnterior.filter(i => i.categoria === "Seguridad").length;
 
   let varSeg = 0;
 
@@ -646,20 +667,17 @@ function calcularComparativa(registrosActuales) {
 }
 
 /* ==========================
-   GRÁFICO CATEGORÍAS
+   GRÁFICOS
 ========================== */
 function renderChartCategorias(registros) {
   const canvas = document.getElementById("chartCategorias");
   if (!canvas || typeof Chart === "undefined") return;
 
   const conteo = contarPorCategoria(registros);
-
   const labels = Object.keys(conteo);
   const data = Object.values(conteo);
 
-  if (chartCategorias) {
-    chartCategorias.destroy();
-  }
+  if (chartCategorias) chartCategorias.destroy();
 
   chartCategorias = new Chart(canvas, {
     type: "bar",
@@ -695,9 +713,6 @@ function renderChartCategorias(registros) {
   });
 }
 
-/* ==========================
-   GRÁFICO ESTADOS
-========================== */
 function renderChartEstados(registros) {
   const canvas = document.getElementById("chartEstados");
   if (!canvas || typeof Chart === "undefined") return;
@@ -710,15 +725,12 @@ function renderChartEstados(registros) {
 
   registros.forEach(item => {
     const estado = String(item.estado || "").toLowerCase();
-
     if (estado === "pendiente") conteo["Pendiente"]++;
     else if (estado === "en_proceso") conteo["En proceso"]++;
     else if (estado === "resuelto") conteo["Resuelto"]++;
   });
 
-  if (chartEstados) {
-    chartEstados.destroy();
-  }
+  if (chartEstados) chartEstados.destroy();
 
   chartEstados = new Chart(canvas, {
     type: "doughnut",
@@ -743,9 +755,6 @@ function renderChartEstados(registros) {
   });
 }
 
-/* ==========================
-   GRÁFICO TENDENCIA
-========================== */
 function renderChartTendencia(registros) {
   const canvas = document.getElementById("chartTendencia");
   if (!canvas || typeof Chart === "undefined") return;
@@ -778,9 +787,7 @@ function renderChartTendencia(registros) {
 
   const data = Object.values(mapaDias);
 
-  if (chartTendencia) {
-    chartTendencia.destroy();
-  }
+  if (chartTendencia) chartTendencia.destroy();
 
   chartTendencia = new Chart(canvas, {
     type: "line",
@@ -813,11 +820,161 @@ function renderChartTendencia(registros) {
   });
 }
 
+function renderChartHorarios(registros) {
+  const canvas = document.getElementById("chartHorarios");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const franjas = {
+    "00:00 - 06:00": 0,
+    "06:00 - 12:00": 0,
+    "12:00 - 18:00": 0,
+    "18:00 - 00:00": 0
+  };
+
+  registros.forEach(item => {
+    const fecha = getFechaDate(item.fecha);
+    if (!fecha) return;
+
+    const hora = fecha.getHours();
+
+    if (hora >= 0 && hora < 6) franjas["00:00 - 06:00"]++;
+    else if (hora >= 6 && hora < 12) franjas["06:00 - 12:00"]++;
+    else if (hora >= 12 && hora < 18) franjas["12:00 - 18:00"]++;
+    else franjas["18:00 - 00:00"]++;
+  });
+
+  const labels = Object.keys(franjas);
+  const data = Object.values(franjas);
+
+  if (chartHorarios) chartHorarios.destroy();
+
+  chartHorarios = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Incidencias",
+        data,
+        backgroundColor: [
+          "#64748b",
+          "#18a38d",
+          "#f2a33a",
+          "#d65c5c"
+        ],
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
+
+  const top = Object.entries(franjas).sort((a, b) => b[1] - a[1])[0];
+  if (!top) return;
+
+  const [franja, total] = top;
+
+  if (franjaCritica) franjaCritica.textContent = franja;
+  if (franjaCriticaDetalle) franjaCriticaDetalle.textContent = `${total} incidencias concentradas en esta franja`;
+
+  if (lecturaHoraria) {
+    lecturaHoraria.innerHTML = `
+      <strong>Lectura operativa:</strong> la mayor concentración territorial se registra en la franja
+      <strong>${franja}</strong>, con <strong>${total}</strong> incidencias dentro del período filtrado.
+      Esto sugiere reforzar monitoreo, patrullaje preventivo o supervisión focalizada en ese tramo horario.
+    `;
+  }
+}
+
+function renderChartComparativaCategorias(registrosActuales) {
+  const canvas = document.getElementById("chartComparativaCategorias");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const dias = getDiasFiltro();
+  if (dias <= 0) return;
+
+  const hoy = new Date();
+
+  const inicioActual = new Date();
+  inicioActual.setDate(hoy.getDate() - dias);
+
+  const inicioAnterior = new Date();
+  inicioAnterior.setDate(hoy.getDate() - (dias * 2));
+
+  const finAnterior = new Date(inicioActual);
+
+  const periodoAnterior = allIncidencias.filter(i => {
+    const fecha = getFechaDate(i.fecha);
+    return fecha && fecha >= inicioAnterior && fecha < finAnterior;
+  });
+
+  const actual = contarPorCategoria(registrosActuales);
+  const anterior = contarPorCategoria(periodoAnterior);
+
+  const categorias = [...new Set([
+    ...Object.keys(actual),
+    ...Object.keys(anterior)
+  ])];
+
+  const actualData = categorias.map(cat => actual[cat] || 0);
+  const anteriorData = categorias.map(cat => anterior[cat] || 0);
+
+  if (chartComparativaCategorias) chartComparativaCategorias.destroy();
+
+  chartComparativaCategorias = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: categorias,
+      datasets: [
+        {
+          label: "Período actual",
+          data: actualData,
+          backgroundColor: "#0b7c70",
+          borderRadius: 8
+        },
+        {
+          label: "Período anterior",
+          data: anteriorData,
+          backgroundColor: "#cbd5e1",
+          borderRadius: 8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
+    }
+  });
+}
+
+/* ==========================
+   ALERTAS
+========================== */
 function renderAlertas(registros, sectores) {
   if (!contenedorAlertas) return;
 
   const alertas = [];
-
   const pendientes = registros.filter(i => i.estado === "pendiente");
   const enProceso = registros.filter(i => i.estado === "en_proceso");
 
@@ -880,341 +1037,115 @@ function renderAlertas(registros, sectores) {
   `).join("");
 }
 
-function renderChartHorarios(registros) {
-  const canvas = document.getElementById("chartHorarios");
-  if (!canvas || typeof Chart === "undefined") return;
-
-  const franjas = {
-    "00:00 - 06:00": 0,
-    "06:00 - 12:00": 0,
-    "12:00 - 18:00": 0,
-    "18:00 - 00:00": 0
-  };
-
-  registros.forEach(item => {
-    const fecha = getFechaDate(item.fecha);
-    if (!fecha) return;
-
-    const hora = fecha.getHours();
-
-    if (hora >= 0 && hora < 6) {
-      franjas["00:00 - 06:00"]++;
-    } else if (hora >= 6 && hora < 12) {
-      franjas["06:00 - 12:00"]++;
-    } else if (hora >= 12 && hora < 18) {
-      franjas["12:00 - 18:00"]++;
-    } else {
-      franjas["18:00 - 00:00"]++;
-    }
-  });
-
-  const labels = Object.keys(franjas);
-  const data = Object.values(franjas);
-
-  if (chartHorarios) {
-    chartHorarios.destroy();
-  }
-
-  chartHorarios = new Chart(canvas, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Incidencias",
-        data,
-        backgroundColor: [
-          "#64748b",
-          "#18a38d",
-          "#f2a33a",
-          "#d65c5c"
-        ],
-        borderRadius: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            precision: 0
-          }
-        }
-      }
-    }
-  });
-
-  const top = Object.entries(franjas).sort((a, b) => b[1] - a[1])[0];
-
-  if (!top) return;
-
-  const [franja, total] = top;
-
-  if (franjaCritica) {
-    franjaCritica.textContent = franja;
-  }
-
-  if (franjaCriticaDetalle) {
-    franjaCriticaDetalle.textContent = `${total} incidencias concentradas en esta franja`;
-  }
-
-  if (lecturaHoraria) {
-    lecturaHoraria.innerHTML = `
-      <strong>Lectura operativa:</strong> la mayor concentración territorial se registra en la franja
-      <strong>${franja}</strong>, con <strong>${total}</strong> incidencias dentro del período filtrado.
-      Esto sugiere reforzar monitoreo, patrullaje preventivo o supervisión focalizada en ese tramo horario.
-    `;
-  }
-}
-
-function renderChartComparativaCategorias(registrosActuales) {
-  const canvas = document.getElementById("chartComparativaCategorias");
-  if (!canvas || typeof Chart === "undefined") return;
-
-  const dias = getDiasFiltro();
-  if (dias <= 0) return;
-
-  const hoy = new Date();
-
-  const inicioActual = new Date();
-  inicioActual.setDate(hoy.getDate() - dias);
-
-  const inicioAnterior = new Date();
-  inicioAnterior.setDate(hoy.getDate() - (dias * 2));
-
-  const finAnterior = new Date(inicioActual);
-
-  const periodoAnterior = allIncidencias.filter(i => {
-    const fecha = getFechaDate(i.fecha);
-    return fecha && fecha >= inicioAnterior && fecha < finAnterior;
-  });
-
-  const actual = contarPorCategoria(registrosActuales);
-  const anterior = contarPorCategoria(periodoAnterior);
-
-  const categorias = [...new Set([
-    ...Object.keys(actual),
-    ...Object.keys(anterior)
-  ])];
-
-  const actualData = categorias.map(cat => actual[cat] || 0);
-  const anteriorData = categorias.map(cat => anterior[cat] || 0);
-
-  if (chartComparativaCategorias) {
-    chartComparativaCategorias.destroy();
-  }
-
-  chartComparativaCategorias = new Chart(canvas, {
-    type: "bar",
-    data: {
-      labels: categorias,
-      datasets: [
-        {
-          label: "Período actual",
-          data: actualData,
-          backgroundColor: "#0b7c70",
-          borderRadius: 8
-        },
-        {
-          label: "Período anterior",
-          data: anteriorData,
-          backgroundColor: "#cbd5e1",
-          borderRadius: 8
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: "bottom"
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            precision: 0
-          }
-        }
-      }
-    }
-  });
-}
-
-function verSectorEnMapa(index) {
-  if (!mapAnalisis || !topSectoresActuales[index]) return;
-
-  const sector = topSectoresActuales[index];
-
-  if (typeof sector.lat !== "number" || typeof sector.lng !== "number") return;
-
-  mapAnalisis.setView([sector.lat, sector.lng], 17);
-
-  const popupHtml = `
-    <b>${sector.nombre}</b><br>
-    Índice: ${sector.indice}<br>
-    Categoría dominante: ${sector.categoriaDominante}<br>
-    Prioridad: ${getPrioridadTexto(sector.indice)}
-  `;
-
-  L.popup()
-    .setLatLng([sector.lat, sector.lng])
-    .setContent(popupHtml)
-    .openOn(mapAnalisis);
-}
-
-window.verSectorEnMapa = verSectorEnMapa;
-
-function verFocoPrincipal() {
-  if (!mapAnalisis || !focoPrincipalActual) return;
-
-  const sector = focoPrincipalActual;
-
-  if (typeof sector.lat !== "number" || typeof sector.lng !== "number") return;
-
-  mapAnalisis.setView([sector.lat, sector.lng], 17);
-
-  const popupHtml = `
-    <b>${sector.nombre}</b><br>
-    Índice: ${sector.indice}<br>
-    Categoría dominante: ${sector.categoriaDominante}<br>
-    Prioridad: ${getPrioridadTexto(sector.indice)}
-  `;
-
-  L.popup()
-    .setLatLng([sector.lat, sector.lng])
-    .setContent(popupHtml)
-    .openOn(mapAnalisis);
-}
-
-if (btnVerFocoPrincipal) {
-  btnVerFocoPrincipal.addEventListener("click", verFocoPrincipal);
-}
-
+/* ==========================
+   PDF EJECUTIVO
+========================== */
 async function exportarAnalisisPDF() {
-    const { jsPDF } = window.jspdf;
+  if (!pdfPagina1 || !pdfPagina2 || !pdfPagina3) {
+    alert("No se encontraron los bloques del informe.");
+    return;
+  }
 
+  try {
+    if (btnExportarAnalisisPDF) {
+      btnExportarAnalisisPDF.disabled = true;
+      btnExportarAnalisisPDF.textContent = "Generando PDF...";
+    }
+
+    document.body.classList.add("pdf-exporting");
+    window.scrollTo({ top: 0, behavior: "instant" });
+
+    await new Promise(resolve => setTimeout(resolve, 900));
+
+    const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4"
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4"
     });
 
-    const contenido = document.getElementById("analisisExportable");
-    if (!contenido) {
-        alert("No se encontró contenido de análisis.");
-        return;
-    }
+    const paginas = [pdfPagina1, pdfPagina2, pdfPagina3];
+    const margin = 8;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const usableWidth = pageWidth - (margin * 2);
+    const usableHeight = pageHeight - 26;
 
-    const canvas = await html2canvas(contenido, {
+    for (let i = 0; i < paginas.length; i++) {
+      const bloque = paginas[i];
+      if (!bloque) continue;
+
+      const canvas = await html2canvas(bloque, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#f8fafc"
-    });
+        backgroundColor: "#f8fafc",
+        scrollX: 0,
+        scrollY: -window.scrollY
+      });
 
-    const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/png");
 
-    const pdfWidth = 297;
-    const pdfHeight = 210;
+      const imgWidth = usableWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    const margen = 10;
+      let finalWidth = imgWidth;
+      let finalHeight = imgHeight;
 
-    const headerHeight = 18;
-    const footerHeight = 10;
+      if (finalHeight > usableHeight) {
+        const ratio = usableHeight / finalHeight;
+        finalWidth = finalWidth * ratio;
+        finalHeight = usableHeight;
+      }
 
-    const usableWidth = pdfWidth - (margen * 2);
-    const usableHeight = pdfHeight - headerHeight - footerHeight - (margen * 2);
+      const x = (pageWidth - finalWidth) / 2;
+      const y = 18;
 
-    const imgWidth = usableWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      if (i > 0) pdf.addPage();
 
-    let heightLeft = imgHeight;
-    let position = 0;
-    let pagina = 1;
+      // Fondo
+      pdf.setFillColor(248, 250, 252);
+      pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
-    while (heightLeft > 0) {
+      // Header
+      pdf.setFillColor(15, 118, 110);
+      pdf.rect(0, 0, pageWidth, 14, "F");
 
-        if (pagina > 1) pdf.addPage();
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.text("GeoRegistro - Informe Ejecutivo Territorial", 12, 9);
 
-        /*
-        ======================
-        FONDO GRIS SUAVE
-        ======================
-        */
-        pdf.setFillColor(248, 250, 252);
-        pdf.rect(0, 0, pdfWidth, pdfHeight, "F");
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.text(
+        `Generado: ${new Date().toLocaleString("es-CL")} | Período: ${periodoEl?.selectedOptions?.[0]?.text || "N/A"}`,
+        12,
+        13
+      );
 
-        /*
-        ======================
-        HEADER
-        ======================
-        */
-        pdf.setFillColor(15, 118, 110);
-        pdf.rect(0, 0, pdfWidth, 14, "F");
+      // Imagen
+      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
 
-        pdf.setTextColor(255,255,255);
-        pdf.setFontSize(14);
-        pdf.setFont("helvetica", "bold");
-        pdf.text("GeoRegistro - Informe Ejecutivo Territorial", 12, 9);
+      // Footer
+      pdf.setDrawColor(220);
+      pdf.line(10, 202, 287, 202);
 
-        pdf.setFontSize(8);
-        pdf.setFont("helvetica", "normal");
-        pdf.text(
-            `Generado: ${new Date().toLocaleString("es-CL")} | Período: ${document.getElementById("filtroPeriodo")?.value || "N/A"}`,
-            12,
-            13
-        );
-
-        /*
-        ======================
-        IMAGEN CONTENIDO
-        ======================
-        */
-        pdf.addImage(
-            imgData,
-            "PNG",
-            margen,
-            headerHeight + margen + position,
-            imgWidth,
-            imgHeight
-        );
-
-        /*
-        ======================
-        FOOTER
-        ======================
-        */
-        pdf.setDrawColor(220);
-        pdf.line(10, 202, 287, 202);
-
-        pdf.setTextColor(100);
-        pdf.setFontSize(8);
-
-        pdf.text(
-            "Generado automáticamente por plataforma GeoRegistro",
-            12,
-            207
-        );
-
-        pdf.text(
-            `Página ${pagina}`,
-            270,
-            207
-        );
-
-        heightLeft -= usableHeight;
-        position -= usableHeight;
-        pagina++;
+      pdf.setTextColor(100);
+      pdf.setFontSize(8);
+      pdf.text("Generado automáticamente por plataforma GeoRegistro", 12, 207);
+      pdf.text(`Página ${i + 1} de ${paginas.length}`, 260, 207);
     }
 
     pdf.save(`georegistro_analisis_ejecutivo_${new Date().toISOString().split("T")[0]}.pdf`);
-}
+  } catch (error) {
+    console.error("Error exportando PDF ejecutivo:", error);
+    alert("No se pudo generar el PDF ejecutivo.");
+  } finally {
+    document.body.classList.remove("pdf-exporting");
 
+    if (btnExportarAnalisisPDF) {
+      btnExportarAnalisisPDF.disabled = false;
+      btnExportarAnalisisPDF.textContent = "Exportar Informe";
+    }
+  }
+}
