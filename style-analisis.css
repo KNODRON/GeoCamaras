@@ -345,3 +345,34 @@ button, input, select { font: inherit; }
   display: flex;
   justify-content: flex-start;
 }
+
+.pdf-exporting {
+  background: #ffffff !important;
+}
+
+.pdf-exporting .analisis-topbar,
+.pdf-exporting .filters-card,
+.pdf-exporting .kpi-card,
+.pdf-exporting .card,
+.pdf-exporting .alertas-card,
+.pdf-exporting .horario-card,
+.pdf-exporting .comparativa-categorias-card {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .analisis-topbar,
+  .filters-card,
+  .kpi-card,
+  .card,
+  .alertas-card,
+  .horario-card,
+  .comparativa-categorias-card {
+    box-shadow: none !important;
+  }
+}
