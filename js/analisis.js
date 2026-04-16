@@ -41,6 +41,9 @@ const btnVerFocoPrincipal = document.getElementById("btnVerFocoPrincipal");
 
 const btnExportarAnalisisPDF = document.getElementById("btnExportarAnalisisPDF");
 const pdfAnalisisWrap = document.getElementById("pdfAnalisisWrap");
+const pdfPagina1 = document.getElementById("pdfPagina1");
+const pdfPagina2 = document.getElementById("pdfPagina2");
+const pdfPagina3 = document.getElementById("pdfPagina3");
 /* ==========================
    VARIABLES
 ========================== */
@@ -1097,7 +1100,7 @@ if (btnVerFocoPrincipal) {
 }
 
 async function exportarAnalisisPDF() {
-  if (!pdfAnalisisWrap) return;
+  if (!pdfPagina1 || !pdfPagina2 || !pdfPagina3) return;
 
   try {
     if (btnExportarAnalisisPDF) {
@@ -1106,20 +1109,9 @@ async function exportarAnalisisPDF() {
     }
 
     document.body.classList.add("pdf-exporting");
-
     window.scrollTo({ top: 0, behavior: "instant" });
 
-    await new Promise(resolve => setTimeout(resolve, 700));
-
-    const canvas = await html2canvas(pdfAnalisisWrap, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      scrollX: 0,
-      scrollY: -window.scrollY
-    });
-
-    const imgData = canvas.toDataURL("image/png");
+    await new Promise(resolve => setTimeout(resolve, 900));
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({
@@ -1128,27 +1120,47 @@ async function exportarAnalisisPDF() {
       format: "a4"
     });
 
+    const paginas = [pdfPagina1, pdfPagina2, pdfPagina3];
+    const margin = 8;
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const margin = 8;
     const usableWidth = pageWidth - (margin * 2);
     const usableHeight = pageHeight - (margin * 2);
 
-    const imgWidth = usableWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    for (let i = 0; i < paginas.length; i++) {
+      const bloque = paginas[i];
+      if (!bloque) continue;
 
-    let heightLeft = imgHeight;
-    let position = margin;
+      const canvas = await html2canvas(bloque, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        scrollX: 0,
+        scrollY: -window.scrollY
+      });
 
-    pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
-    heightLeft -= usableHeight;
+      const imgData = canvas.toDataURL("image/png");
 
-    while (heightLeft > 0) {
-      pdf.addPage();
-      position = margin - (imgHeight - heightLeft);
-      pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
-      heightLeft -= usableHeight;
+      const imgWidth = usableWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let finalWidth = imgWidth;
+      let finalHeight = imgHeight;
+
+      if (finalHeight > usableHeight) {
+        const ratio = usableHeight / finalHeight;
+        finalWidth = finalWidth * ratio;
+        finalHeight = usableHeight;
+      }
+
+      const x = (pageWidth - finalWidth) / 2;
+      const y = margin;
+
+      if (i > 0) {
+        pdf.addPage();
+      }
+
+      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
     }
 
     const fecha = new Date();
@@ -1156,11 +1168,11 @@ async function exportarAnalisisPDF() {
     const mm = String(fecha.getMonth() + 1).padStart(2, "0");
     const dd = String(fecha.getDate()).padStart(2, "0");
 
-    pdf.save(`georegistro_analisis_${yyyy}-${mm}-${dd}.pdf`);
+    pdf.save(`georegistro_analisis_ejecutivo_${yyyy}-${mm}-${dd}.pdf`);
 
   } catch (error) {
-    console.error("Error exportando PDF de análisis:", error);
-    alert("No se pudo generar el PDF.");
+    console.error("Error exportando PDF ejecutivo:", error);
+    alert("No se pudo generar el PDF ejecutivo.");
   } finally {
     document.body.classList.remove("pdf-exporting");
 
