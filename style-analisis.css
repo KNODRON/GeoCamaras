@@ -339,3 +339,9 @@ button, input, select { font: inherit; }
   color: #ffffff;
   border-color: #0b7c70;
 }
+
+.narrative-actions {
+  padding: 0 16px 16px;
+  display: flex;
+  justify-content: flex-start;
+}
