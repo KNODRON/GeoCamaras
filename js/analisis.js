@@ -1108,8 +1108,7 @@ async function exportarAnalisisPDF() {
         format: "a4"
     });
 
-    const contenido = document.querySelector(".analisis-container");
-
+    const contenido = document.getElementById("analisisExportable");
     if (!contenido) {
         alert("No se encontró contenido de análisis.");
         return;
