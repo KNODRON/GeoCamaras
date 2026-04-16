@@ -29,7 +29,7 @@
       </div>
     </header>
 
-    <div id="pdfAnalisisWrap">
+    <div id="pdfPagina1" class="pdf-page-block">
     <section class="filters-card">
       <div class="field">
         <label for="analisisPeriodo">Período</label>
@@ -140,7 +140,9 @@
     </div>
   </div>
 </section>
-    
+    </div>
+
+    <div id="pdfPagina2" class="pdf-page-block">
     <section class="charts-grid">
       <article class="card chart-card">
         <div class="card-header"><h3>Incidencias por categoría</h3><span class="meta">Distribución actual</span></div>
@@ -157,7 +159,9 @@
         <div class="chart-wrap large"><canvas id="chartTendencia"></canvas></div>
       </article>
     </section>
+    </div>
 
+    <div id="pdfPagina3" class="pdf-page-block">
     <section class="insights-grid">
       <article class="card table-card">
         <div class="card-header"><h3>Top sectores críticos</h3><span id="rankingMeta" class="meta">0 sectores analizados</span></div>
@@ -196,6 +200,7 @@
       </article>
     </section>
   </div>
+</div>
 </div>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
