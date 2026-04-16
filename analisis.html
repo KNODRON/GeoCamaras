@@ -13,7 +13,6 @@
 <body>
   <div class="analisis-app">
     <header class="analisis-topbar">
-      <div id="analisisExportable">
       <div class="brand-wrap">
         <div class="brand-mini">GR</div>
         <div>
@@ -21,6 +20,7 @@
           <p>Análisis Territorial · Lectura ejecutiva y priorización operativa en tiempo real</p>
         </div>
       </div>
+
       <div class="topbar-actions">
         <div class="pill">Comuna: Demo</div>
         <div class="pill" id="analisisUsuario">Usuario: --</div>
@@ -30,186 +30,257 @@
       </div>
     </header>
 
-    <div id="pdfPagina1" class="pdf-page-block">
-    <section class="filters-card">
-      <div class="field">
-        <label for="analisisPeriodo">Período</label>
-        <select id="analisisPeriodo">
-          <option value="7">Últimos 7 días</option>
-          <option value="14">Últimos 14 días</option>
-          <option value="30">Últimos 30 días</option>
-          <option value="0">Todo</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="analisisCategoria">Categoría</label>
-        <select id="analisisCategoria"><option value="">Todas</option></select>
-      </div>
-      <div class="field">
-        <label for="analisisEstado">Estado</label>
-        <select id="analisisEstado">
-          <option value="">Todos</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="en_proceso">En proceso</option>
-          <option value="resuelto">Resuelto</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="analisisInspector">Inspector</label>
-        <select id="analisisInspector"><option value="">Todos</option></select>
-      </div>
-      <button id="btnActualizarAnalisis" class="btn btn-primary" type="button">Actualizar análisis</button>
-    </section>
+    <div id="analisisExportable">
 
-    <section class="kpis-grid">
-      <article class="kpi-card"><span class="kpi-label">Total incidencias</span><strong id="kpiTotal">0</strong><small>Base del análisis</small></article>
-      <article class="kpi-card"><span class="kpi-label">Pendientes activas</span><strong id="kpiPendientes">0</strong><small>Seguimiento inmediato</small></article>
-      <article class="kpi-card"><span class="kpi-label">Sectores críticos</span><strong id="kpiCriticos">0</strong><small>Prioridad alta / crítica</small></article>
-      <article class="kpi-card"><span class="kpi-label">Reincidencias</span><strong id="kpiReincidencias">0</strong><small>Eventos repetidos por cuadrícula</small></article>
-      <article class="kpi-card"><span class="kpi-label">Tendencia general</span><strong id="kpiTendencia">—</strong><small id="kpiTendenciaDetalle">Sin comparación aún</small></article>
-      <article class="kpi-card"><span class="kpi-label">Categoría predominante</span><strong id="kpiCategoria">—</strong><small>Mayor presencia territorial</small></article>
-    </section>
+      <div id="pdfPagina1" class="pdf-page-block">
+        <section class="filters-card">
+          <div class="field">
+            <label for="analisisPeriodo">Período</label>
+            <select id="analisisPeriodo">
+              <option value="7">Últimos 7 días</option>
+              <option value="14">Últimos 14 días</option>
+              <option value="30">Últimos 30 días</option>
+              <option value="0">Todo</option>
+            </select>
+          </div>
 
-    <div class="comparativa-grid">
+          <div class="field">
+            <label for="analisisCategoria">Categoría</label>
+            <select id="analisisCategoria">
+              <option value="">Todas</option>
+            </select>
+          </div>
 
-    <div class="card comparativa-card">
-        <span class="label">Variación General</span>
-        <h2 id="varGeneral">--</h2>
-        <small>Comparado período anterior</small>
-    </div>
+          <div class="field">
+            <label for="analisisEstado">Estado</label>
+            <select id="analisisEstado">
+              <option value="">Todos</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En proceso</option>
+              <option value="resuelto">Resuelto</option>
+            </select>
+          </div>
 
-    <div class="card comparativa-card">
-        <span class="label">Variación Seguridad</span>
-        <h2 id="varSeguridad">--</h2>
-        <small>Eventos categoría seguridad</small>
-    </div>
+          <div class="field">
+            <label for="analisisInspector">Inspector</label>
+            <select id="analisisInspector">
+              <option value="">Todos</option>
+            </select>
+          </div>
 
-    <div class="card comparativa-card">
-        <span class="label">Proyección Próx. Período</span>
-        <h2 id="proyeccionPeriodo">--</h2>
-        <small>Estimación automática</small>
-    </div>
-
-</div>
-
-    <section class="alertas-card">
-      <div class="card-header">
-        <h3>Alertas del sistema</h3>
-        <span class="meta">Detección automática de focos territoriales</span>
-      </div>
-
-      <div id="contenedorAlertas" class="alertas-grid">
-        <article class="alerta-item alerta-info">
-          <strong>Esperando análisis...</strong>
-          <p>Las alertas territoriales aparecerán aquí automáticamente.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="horario-card">
-  <div class="card-header">
-    <h3>Comportamiento horario</h3>
-    <span class="meta">Lectura temporal operativa</span>
-  </div>
-
-  <div class="horario-grid">
-    <div class="horario-chart-wrap">
-      <canvas id="chartHorarios"></canvas>
-    </div>
-
-<section class="comparativa-categorias-card">
-  <div class="card-header">
-    <h3>Comparativa por categoría</h3>
-    <span class="meta">Período actual vs período anterior</span>
-  </div>
-
-  <div class="comparativa-categorias-wrap">
-    <canvas id="chartComparativaCategorias"></canvas>
-  </div>
-</section>
-    
-    <div class="horario-side">
-      <div class="horario-kpi">
-        <span class="label">Franja crítica</span>
-        <strong id="franjaCritica">--</strong>
-        <small id="franjaCriticaDetalle">Sin datos suficientes</small>
-      </div>
-
-      <div id="lecturaHoraria" class="horario-lectura">
-        Esperando análisis horario.
-      </div>
-    </div>
-  </div>
-</section>
-    </div>
-
-    <div id="pdfPagina2" class="pdf-page-block">
-    <section class="charts-grid">
-      <article class="card chart-card">
-        <div class="card-header"><h3>Incidencias por categoría</h3><span class="meta">Distribución actual</span></div>
-        <div class="chart-wrap"><canvas id="chartCategorias"></canvas></div>
-      </article>
-
-      <article class="card chart-card">
-        <div class="card-header"><h3>Estados operativos</h3><span class="meta">Pendiente / En proceso / Resuelto</span></div>
-        <div class="chart-wrap"><canvas id="chartEstados"></canvas></div>
-      </article>
-
-      <article class="card chart-card wide">
-        <div class="card-header"><h3>Tendencia temporal</h3><span class="meta">Últimos días según filtros</span></div>
-        <div class="chart-wrap large"><canvas id="chartTendencia"></canvas></div>
-      </article>
-    </section>
-    </div>
-
-    <div id="pdfPagina3" class="pdf-page-block">
-    <section class="insights-grid">
-      <article class="card table-card">
-        <div class="card-header"><h3>Top sectores críticos</h3><span id="rankingMeta" class="meta">0 sectores analizados</span></div>
-        <div class="table-wrap">
-          <table class="ranking-table">
-            <thead>
-              <tr>
-                <th>Sector</th>
-                <th>Índice</th>
-                <th>Prioridad</th>
-                <th>Reincidencia</th>
-                <th>Categoría dominante</th>
-                <th>Tendencia</th>
-                <th>Ver</th>
-              </tr>
-            </thead>
-            <tbody id="tablaTopSectores"><tr><td colspan="6">Cargando análisis...</td></tr></tbody>
-          </table>
-        </div>
-      </article>
-
-      <article class="card narrative-card">
-        <div class="card-header"><h3>Lectura automática del sistema</h3><span class="meta">Interpretación ejecutiva</span></div>
-        <div id="lecturaAutomatica" class="narrative-body">Esperando datos para generar lectura automática.</div>
-
-        <div class="narrative-actions">
-          <button id="btnVerFocoPrincipal" class="btn-ver-foco" type="button">
-            Ver foco principal
+          <button id="btnActualizarAnalisis" class="btn btn-primary" type="button">
+            Actualizar análisis
           </button>
-        </div>
-      </article>
+        </section>
 
-      <article class="card map-mini-card">
-        <div class="card-header"><h3>Mapa analítico</h3><span class="meta">Top 5 focos territoriales</span></div>
-        <div id="mapAnalisis" class="map-mini"></div>
-      </article>
-    </section>
+        <section class="kpis-grid">
+          <article class="kpi-card">
+            <span class="kpi-label">Total incidencias</span>
+            <strong id="kpiTotal">0</strong>
+            <small>Base del análisis</small>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-label">Pendientes activas</span>
+            <strong id="kpiPendientes">0</strong>
+            <small>Seguimiento inmediato</small>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-label">Sectores críticos</span>
+            <strong id="kpiCriticos">0</strong>
+            <small>Prioridad alta / crítica</small>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-label">Reincidencias</span>
+            <strong id="kpiReincidencias">0</strong>
+            <small>Eventos repetidos por cuadrícula</small>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-label">Tendencia general</span>
+            <strong id="kpiTendencia">—</strong>
+            <small id="kpiTendenciaDetalle">Sin comparación aún</small>
+          </article>
+
+          <article class="kpi-card">
+            <span class="kpi-label">Categoría predominante</span>
+            <strong id="kpiCategoria">—</strong>
+            <small>Mayor presencia territorial</small>
+          </article>
+        </section>
+
+        <div class="comparativa-grid">
+          <div class="card comparativa-card">
+            <span class="label">Variación General</span>
+            <h2 id="varGeneral">--</h2>
+            <small>Comparado período anterior</small>
+          </div>
+
+          <div class="card comparativa-card">
+            <span class="label">Variación Seguridad</span>
+            <h2 id="varSeguridad">--</h2>
+            <small>Eventos categoría seguridad</small>
+          </div>
+
+          <div class="card comparativa-card">
+            <span class="label">Proyección Próx. Período</span>
+            <h2 id="proyeccionPeriodo">--</h2>
+            <small>Estimación automática</small>
+          </div>
+        </div>
+
+        <section class="alertas-card">
+          <div class="card-header">
+            <h3>Alertas del sistema</h3>
+            <span class="meta">Detección automática de focos territoriales</span>
+          </div>
+
+          <div id="contenedorAlertas" class="alertas-grid">
+            <article class="alerta-item alerta-info">
+              <strong>Esperando análisis...</strong>
+              <p>Las alertas territoriales aparecerán aquí automáticamente.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="horario-card">
+          <div class="card-header">
+            <h3>Comportamiento horario</h3>
+            <span class="meta">Lectura temporal operativa</span>
+          </div>
+
+          <div class="horario-grid">
+            <div class="horario-chart-wrap">
+              <canvas id="chartHorarios"></canvas>
+            </div>
+
+            <section class="comparativa-categorias-card">
+              <div class="card-header">
+                <h3>Comparativa por categoría</h3>
+                <span class="meta">Período actual vs período anterior</span>
+              </div>
+
+              <div class="comparativa-categorias-wrap">
+                <canvas id="chartComparativaCategorias"></canvas>
+              </div>
+            </section>
+
+            <div class="horario-side">
+              <div class="horario-kpi">
+                <span class="label">Franja crítica</span>
+                <strong id="franjaCritica">--</strong>
+                <small id="franjaCriticaDetalle">Sin datos suficientes</small>
+              </div>
+
+              <div id="lecturaHoraria" class="horario-lectura">
+                Esperando análisis horario.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div id="pdfPagina2" class="pdf-page-block">
+        <section class="charts-grid">
+          <article class="card chart-card">
+            <div class="card-header">
+              <h3>Incidencias por categoría</h3>
+              <span class="meta">Distribución actual</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="chartCategorias"></canvas>
+            </div>
+          </article>
+
+          <article class="card chart-card">
+            <div class="card-header">
+              <h3>Estados operativos</h3>
+              <span class="meta">Pendiente / En proceso / Resuelto</span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="chartEstados"></canvas>
+            </div>
+          </article>
+
+          <article class="card chart-card wide">
+            <div class="card-header">
+              <h3>Tendencia temporal</h3>
+              <span class="meta">Últimos días según filtros</span>
+            </div>
+            <div class="chart-wrap large">
+              <canvas id="chartTendencia"></canvas>
+            </div>
+          </article>
+        </section>
+      </div>
+
+      <div id="pdfPagina3" class="pdf-page-block">
+        <section class="insights-grid">
+          <article class="card table-card">
+            <div class="card-header">
+              <h3>Top sectores críticos</h3>
+              <span id="rankingMeta" class="meta">0 sectores analizados</span>
+            </div>
+
+            <div class="table-wrap">
+              <table class="ranking-table">
+                <thead>
+                  <tr>
+                    <th>Sector</th>
+                    <th>Índice</th>
+                    <th>Prioridad</th>
+                    <th>Reincidencia</th>
+                    <th>Categoría dominante</th>
+                    <th>Tendencia</th>
+                    <th>Ver</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaTopSectores">
+                  <tr>
+                    <td colspan="7">Cargando análisis...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card narrative-card">
+            <div class="card-header">
+              <h3>Lectura automática del sistema</h3>
+              <span class="meta">Interpretación ejecutiva</span>
+            </div>
+
+            <div id="lecturaAutomatica" class="narrative-body">
+              Esperando datos para generar lectura automática.
+            </div>
+
+            <div class="narrative-actions">
+              <button id="btnVerFocoPrincipal" class="btn-ver-foco" type="button">
+                Ver foco principal
+              </button>
+            </div>
+          </article>
+
+          <article class="card map-mini-card">
+            <div class="card-header">
+              <h3>Mapa analítico</h3>
+              <span class="meta">Top 5 focos territoriales</span>
+            </div>
+            <div id="mapAnalisis" class="map-mini"></div>
+          </article>
+        </section>
+      </div>
+
+    </div>
   </div>
-</div>
-</div>
-  
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script type="module" src="./js/analisis.js"></script>
-</div>
 </body>
 </html>
