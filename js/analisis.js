@@ -37,6 +37,7 @@ const contenedorAlertas = document.getElementById("contenedorAlertas");
 const franjaCritica = document.getElementById("franjaCritica");
 const franjaCriticaDetalle = document.getElementById("franjaCriticaDetalle");
 const lecturaHoraria = document.getElementById("lecturaHoraria");
+const btnVerFocoPrincipal = document.getElementById("btnVerFocoPrincipal");
 /* ==========================
    VARIABLES
 ========================== */
@@ -53,6 +54,7 @@ let chartComparativaCategorias = null;
 let heatLayer = null;
 
 let topSectoresActuales = [];
+let focoPrincipalActual = null;
 
 /* ==========================
    PESOS SAIT / MULTICRITERIO
@@ -427,7 +429,10 @@ function renderTablaSectores(sectores) {
     </tr>
   `).join("");
 
-  if (lecturaAutomatica && sectores[0]) {
+if (sectores[0]) {
+  focoPrincipalActual = sectores[0];
+
+  if (lecturaAutomatica) {
     lecturaAutomatica.innerHTML = `
       <b>${sectores[0].nombre}</b> presenta actualmente
       el mayor índice territorial con valor de
@@ -435,6 +440,16 @@ function renderTablaSectores(sectores) {
       predominando la categoría
       <b>${sectores[0].categoriaDominante}</b>.
     `;
+  }
+
+  if (btnVerFocoPrincipal) {
+    btnVerFocoPrincipal.disabled = false;
+  }
+} else {
+  focoPrincipalActual = null;
+
+  if (btnVerFocoPrincipal) {
+    btnVerFocoPrincipal.disabled = true;
   }
 }
 
@@ -1046,3 +1061,29 @@ function verSectorEnMapa(index) {
 }
 
 window.verSectorEnMapa = verSectorEnMapa;
+
+function verFocoPrincipal() {
+  if (!mapAnalisis || !focoPrincipalActual) return;
+
+  const sector = focoPrincipalActual;
+
+  if (typeof sector.lat !== "number" || typeof sector.lng !== "number") return;
+
+  mapAnalisis.setView([sector.lat, sector.lng], 17);
+
+  const popupHtml = `
+    <b>${sector.nombre}</b><br>
+    Índice: ${sector.indice}<br>
+    Categoría dominante: ${sector.categoriaDominante}<br>
+    Prioridad: ${getPrioridadTexto(sector.indice)}
+  `;
+
+  L.popup()
+    .setLatLng([sector.lat, sector.lng])
+    .setContent(popupHtml)
+    .openOn(mapAnalisis);
+}
+
+if (btnVerFocoPrincipal) {
+  btnVerFocoPrincipal.addEventListener("click", verFocoPrincipal);
+}
