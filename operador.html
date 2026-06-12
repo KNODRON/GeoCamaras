@@ -10,212 +10,132 @@
   <link rel="apple-touch-icon" href="./icon-192.png" />
 
   <link rel="stylesheet" href="style-operador.css" />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin=""
-  />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css"
-  />
-
-  <style>
-    .install-pwa-banner {
-      position: fixed;
-      left: 14px;
-      right: 14px;
-      bottom: calc(18px + env(safe-area-inset-bottom));
-      z-index: 1400;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.97);
-      border: 1px solid rgba(11, 93, 82, 0.12);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-      backdrop-filter: blur(12px);
-    }
-
-    .install-pwa-banner.show {
-      display: flex;
-    }
-
-    .install-pwa-copy {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .install-pwa-copy h4 {
-      margin: 0 0 4px;
-      font-size: 15px;
-      color: #1f2a33;
-    }
-
-    .install-pwa-copy p {
-      margin: 0;
-      font-size: 13px;
-      color: #667784;
-      line-height: 1.35;
-    }
-
-    .install-pwa-actions {
-      display: flex;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .install-pwa-btn {
-      min-height: 42px;
-      padding: 0 14px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 700;
-    }
-
-    .install-pwa-btn.primary {
-      background: linear-gradient(180deg, #14b8a6, #0f7669);
-      color: #fff;
-    }
-
-    .install-pwa-btn.secondary {
-      background: #eef2f5;
-      color: #1f2a33;
-      border: 1px solid #d9e1e7;
-    }
-
-    @media (max-width: 480px) {
-      .install-pwa-banner {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .install-pwa-actions {
-        width: 100%;
-      }
-
-      .install-pwa-btn {
-        flex: 1;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 </head>
-<body class="operador-ptz-body">
-  <div class="operador-topbar-floating">
-    <div class="operador-topbar-left">
-      <div class="brand-mini">GR</div>
+
+<body class="operador-body">
+  <div id="mapOperador" class="mapa-operador"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">GR</div>
       <div>
         <h1>GeoRegistro</h1>
-        <p>Panel Operador</p>
+        <p>Modo terreno</p>
       </div>
     </div>
 
-    <button id="togglePanelOperador" class="menu-float-btn" type="button" aria-label="Abrir panel">☰</button>
-  </div>
+    <button id="logoutBtn" class="btn-icon" type="button">Salir</button>
+  </header>
 
-  <div id="mapOperador" class="map-fullscreen"></div>
-
-  <div class="operador-floating-actions">
-    <button id="btnUbicacionFloating" class="floating-action secondary" type="button" title="Obtener ubicación">
-      ⦿
+  <main class="home-panel">
+    <button id="btnNuevoRegistro" class="btn-registro" type="button">
+      <span>＋</span>
+      Registrar incidencia
     </button>
-    <button id="btnPanelFloating" class="floating-action primary" type="button" title="Abrir panel">
-      ☰
-    </button>
-  </div>
 
-  <aside id="panelOperador" class="operador-bottomsheet">
-    <div class="sheet-handle"></div>
+    <div class="user-box">
+      <small>Operador</small>
+      <strong id="userName">Usuario</strong>
+    </div>
+  </main>
 
-    <section class="sheet-card">
-      <h3>Categorías</h3>
-      <div class="grid-categorias compact">
-        <button class="tile-btn azul" data-categoria="Alumbrado" type="button">💡<span>Alumbrado</span></button>
-        <button class="tile-btn verde" data-categoria="Basura" type="button">🗑️<span>Basura</span></button>
-        <button class="tile-btn azul" data-categoria="Seguridad" type="button">🛡️<span>Seguridad</span></button>
-        <button class="tile-btn verde" data-categoria="Áreas Verdes" type="button">🌳<span>Áreas Verdes</span></button>
-        <button class="tile-btn azul" data-categoria="Zoonosis" type="button">🐕<span>Zoonosis</span></button>
-        <button class="tile-btn verde" data-categoria="Infraestructura" type="button">🚧<span>Infraestructura</span></button>
-      </div>
-    </section>
-
-    <section class="sheet-card">
-      <h3>Registrar incidencia</h3>
-
-      <form id="registroForm" class="registro-form">
-        <div class="form-group">
-          <label for="categoria">Categoría</label>
-          <input type="text" id="categoria" readonly placeholder="Seleccione una categoría" required />
-        </div>
-
-        <div class="form-group">
-          <label for="descripcion">Descripción</label>
-          <textarea id="descripcion" rows="4" placeholder="Detalle de la incidencia..." required></textarea>
-        </div>
-
-        <input type="hidden" id="latitud" />
-        <input type="hidden" id="longitud" />
-
-        <div class="form-group">
-          <label for="direccion">Dirección / referencia</label>
-          <input type="text" id="direccion" placeholder="Ej: Av. Principal con Pasaje 4" />
-        </div>
-
-        <p class="helper-text">
-          Obtén la ubicación y luego ajusta el punto en el mapa si es necesario.
-        </p>
-
-        <div class="form-actions">
-          <button type="button" id="btnUbicacion" class="btn-secondary">Obtener ubicación</button>
-          <button type="submit" class="btn-primary">Guardar registro</button>
-        </div>
-
-        <p id="registroMessage" class="form-message"></p>
-      </form>
-    </section>
-
-    <section class="sheet-card session-card compact-session">
-      <div class="session-inline">
-        <div class="session-meta">
-          <h4>Sesión</h4>
-          <div id="userName" class="user-badge-inline">Usuario</div>
-        </div>
-
-        <div class="session-inline-actions">
-          <button id="changePasswordBtn" class="btn-secondary btn-small" type="button">Clave</button>
-          <button id="logoutBtn" class="btn-danger btn-small" type="button">Salir</button>
+  <section id="wizard" class="wizard hidden">
+    <div class="wizard-card">
+      <div class="wizard-head">
+        <button id="btnCerrarWizard" class="btn-back" type="button">×</button>
+        <div>
+          <small id="wizardStepText">Paso 1 de 4</small>
+          <h2 id="wizardTitle">Categoría</h2>
         </div>
       </div>
-    </section>
-  </aside>
 
-  <div id="installPwaBanner" class="install-pwa-banner" aria-live="polite">
-    <div class="install-pwa-copy">
-      <h4>Instalar GeoRegistro</h4>
-      <p id="installPwaText">Agrega esta app al inicio para abrir directo el panel operador.</p>
+      <div class="progress">
+        <div id="progressBar"></div>
+      </div>
+
+      <div id="stepCategoria" class="step active">
+        <p class="step-help">Seleccione el tipo de incidencia.</p>
+
+        <div class="categoria-grid">
+          <button class="categoria-btn" data-categoria="Alumbrado" type="button">💡<span>Alumbrado</span></button>
+          <button class="categoria-btn" data-categoria="Basura" type="button">🗑️<span>Basura</span></button>
+          <button class="categoria-btn" data-categoria="Seguridad" type="button">🛡️<span>Seguridad</span></button>
+          <button class="categoria-btn" data-categoria="Áreas Verdes" type="button">🌳<span>Áreas Verdes</span></button>
+          <button class="categoria-btn" data-categoria="Zoonosis" type="button">🐕<span>Zoonosis</span></button>
+          <button class="categoria-btn" data-categoria="Infraestructura" type="button">🚧<span>Infraestructura</span></button>
+        </div>
+      </div>
+
+      <div id="stepGps" class="step">
+        <div class="gps-box">
+          <div id="gpsIcon" class="gps-icon">📍</div>
+          <h3 id="gpsTitle">Obteniendo ubicación...</h3>
+          <p id="gpsText">Mantenga el teléfono con señal GPS.</p>
+          <small id="gpsAccuracy"></small>
+        </div>
+
+        <button id="btnReintentarGps" class="btn-secondary hidden" type="button">Reintentar GPS</button>
+        <button id="btnGpsContinuar" class="btn-primary hidden" type="button">Continuar</button>
+      </div>
+
+      <div id="stepDescripcion" class="step">
+        <label for="descripcion">Descripción breve</label>
+        <textarea id="descripcion" rows="7" placeholder="Ej: Microbasural en bandejón central..."></textarea>
+
+        <label for="direccion">Referencia opcional</label>
+        <input id="direccion" type="text" placeholder="Ej: Frente al N° 1234, esquina, plaza, pasaje..." />
+
+        <button id="btnDescripcionContinuar" class="btn-primary" type="button">Continuar</button>
+      </div>
+
+      <div id="stepResumen" class="step">
+        <div class="resumen">
+          <div>
+            <small>Categoría</small>
+            <strong id="resCategoria">-</strong>
+          </div>
+
+          <div>
+            <small>Ubicación</small>
+            <strong id="resUbicacion">GPS capturado</strong>
+          </div>
+
+          <div>
+            <small>Estado</small>
+            <strong>Pendiente</strong>
+          </div>
+
+          <div>
+            <small>Descripción</small>
+            <p id="resDescripcion">-</p>
+          </div>
+        </div>
+
+        <button id="btnGuardar" class="btn-primary" type="button">Guardar incidencia</button>
+      </div>
+
+      <p id="registroMessage" class="message"></p>
     </div>
+  </section>
 
-    <div class="install-pwa-actions">
-      <button id="installPwaDismiss" class="install-pwa-btn secondary" type="button">Ahora no</button>
-      <button id="installPwaBtn" class="install-pwa-btn primary" type="button">Instalar</button>
+  <section id="successScreen" class="success hidden">
+    <div class="success-card">
+      <div class="success-icon">✓</div>
+      <h2>Registro enviado</h2>
+      <p>La incidencia quedó ingresada con estado pendiente.</p>
+      <button id="btnNuevoDesdeExito" class="btn-primary" type="button">Nueva incidencia</button>
+      <button id="btnCerrarExito" class="btn-secondary" type="button">Volver al mapa</button>
     </div>
-  </div>
+  </section>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    crossorigin=""
-  ></script>
-  <script src="https://unpkg.com/leaflet-gesture-handling"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script type="module" src="./js/operador.js"></script>
 
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js")
-          .then((reg) => console.log("Service Worker registrado:", reg.scope))
-          .catch((err) => console.error("Error registrando Service Worker:", err));
+        navigator.serviceWorker.register("./service-worker.js").catch(console.error);
       });
     }
   </script>
