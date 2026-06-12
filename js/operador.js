@@ -1,8 +1,7 @@
 import { auth, db } from "./firebase-config.js";
 import { requireRole } from "./guards.js";
 import {
-  signOut,
-  sendPasswordResetEmail
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection,
@@ -11,35 +10,59 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const logoutBtn = document.getElementById("logoutBtn");
-const changePasswordBtn = document.getElementById("changePasswordBtn");
 const userName = document.getElementById("userName");
 
-const togglePanelOperador = document.getElementById("togglePanelOperador");
-const btnPanelFloating = document.getElementById("btnPanelFloating");
-const btnUbicacionFloating = document.getElementById("btnUbicacionFloating");
-const panelOperador = document.getElementById("panelOperador");
+const btnNuevoRegistro = document.getElementById("btnNuevoRegistro");
+const btnNuevoDesdeExito = document.getElementById("btnNuevoDesdeExito");
+const btnCerrarExito = document.getElementById("btnCerrarExito");
+const btnCerrarWizard = document.getElementById("btnCerrarWizard");
 
-const categoriaInput = document.getElementById("categoria");
+const wizard = document.getElementById("wizard");
+const successScreen = document.getElementById("successScreen");
+
+const wizardStepText = document.getElementById("wizardStepText");
+const wizardTitle = document.getElementById("wizardTitle");
+const progressBar = document.getElementById("progressBar");
+
+const stepCategoria = document.getElementById("stepCategoria");
+const stepGps = document.getElementById("stepGps");
+const stepDescripcion = document.getElementById("stepDescripcion");
+const stepResumen = document.getElementById("stepResumen");
+
+const gpsIcon = document.getElementById("gpsIcon");
+const gpsTitle = document.getElementById("gpsTitle");
+const gpsText = document.getElementById("gpsText");
+const gpsAccuracy = document.getElementById("gpsAccuracy");
+const btnReintentarGps = document.getElementById("btnReintentarGps");
+const btnGpsContinuar = document.getElementById("btnGpsContinuar");
+
 const descripcionInput = document.getElementById("descripcion");
-const latitudInput = document.getElementById("latitud");
-const longitudInput = document.getElementById("longitud");
 const direccionInput = document.getElementById("direccion");
-const btnUbicacion = document.getElementById("btnUbicacion");
-const registroForm = document.getElementById("registroForm");
+const btnDescripcionContinuar = document.getElementById("btnDescripcionContinuar");
+const btnGuardar = document.getElementById("btnGuardar");
+
+const resCategoria = document.getElementById("resCategoria");
+const resUbicacion = document.getElementById("resUbicacion");
+const resDescripcion = document.getElementById("resDescripcion");
+
 const registroMessage = document.getElementById("registroMessage");
 
-const installPwaBanner = document.getElementById("installPwaBanner");
-const installPwaBtn = document.getElementById("installPwaBtn");
-const installPwaDismiss = document.getElementById("installPwaDismiss");
-const installPwaText = document.getElementById("installPwaText");
-
-let map;
-let marker;
 let currentUser = null;
 let currentProfile = null;
-let ubicacionInicialCapturada = false;
-let panelInicializado = false;
-let deferredInstallPrompt = null;
+
+let map = null;
+let marker = null;
+
+let pasoActual = 1;
+
+const registro = {
+  categoria: "",
+  descripcion: "",
+  direccion: "",
+  lat: null,
+  lng: null,
+  precision: null
+};
 
 requireRole("operador", async (user, profile) => {
   currentUser = user;
@@ -50,333 +73,292 @@ requireRole("operador", async (user, profile) => {
   }
 
   initMap();
-  bindCategoriaButtons();
-  bindBottomSheet();
-  bindUIEvents();
-  bindPwaInstallEvents();
+  bindEventos();
 });
 
-function bindUIEvents() {
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "./login.html";
+function bindEventos() {
+  logoutBtn?.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "./login.html";
+  });
+
+  btnNuevoRegistro?.addEventListener("click", iniciarRegistro);
+  btnNuevoDesdeExito?.addEventListener("click", iniciarRegistro);
+
+  btnCerrarWizard?.addEventListener("click", cerrarWizard);
+  btnCerrarExito?.addEventListener("click", cerrarExito);
+
+  document.querySelectorAll(".categoria-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".categoria-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      registro.categoria = btn.dataset.categoria || "";
+      irPaso(2);
+      obtenerGpsAutomatico();
     });
-  }
+  });
 
-  if (changePasswordBtn) {
-    changePasswordBtn.addEventListener("click", async () => {
-      if (!currentUser?.email) {
-        setFormMessage("No se encontró el correo del usuario.", "error");
-        return;
-      }
+  btnReintentarGps?.addEventListener("click", obtenerGpsAutomatico);
 
-      try {
-        await sendPasswordResetEmail(auth, currentUser.email);
-        setFormMessage(`Se envió un correo para cambiar la contraseña a ${currentUser.email}.`, "success");
-      } catch (error) {
-        console.error("Error enviando correo de cambio de contraseña:", error);
-        setFormMessage("No se pudo enviar el correo para cambiar la contraseña.", "error");
-      }
-    });
-  }
-
-  if (togglePanelOperador) {
-    togglePanelOperador.addEventListener("click", togglePanel);
-  }
-
-  if (btnPanelFloating) {
-    btnPanelFloating.addEventListener("click", togglePanel);
-  }
-
-  if (btnUbicacion) {
-    btnUbicacion.addEventListener("click", obtenerUbicacion);
-  }
-
-  if (btnUbicacionFloating) {
-    btnUbicacionFloating.addEventListener("click", obtenerUbicacion);
-  }
-
-  if (registroForm) {
-    registroForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const categoria = categoriaInput?.value.trim() || "";
-      const descripcion = descripcionInput?.value.trim() || "";
-      const estado = "pendiente";
-      const direccion = direccionInput?.value.trim() || "";
-
-      const lat = parseFloat(String(latitudInput?.value || "").replace(",", "."));
-      const lng = parseFloat(String(longitudInput?.value || "").replace(",", "."));
-
-      if (!categoria || !descripcion || Number.isNaN(lat) || Number.isNaN(lng)) {
-        setFormMessage("Completa categoría, descripción y captura la ubicación.", "error");
-        return;
-      }
-
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        setFormMessage("Las coordenadas no son válidas.", "error");
-        return;
-      }
-
-      if (lat > -17 || lat < -57 || lng > -66 || lng < -76) {
-        setFormMessage("La ubicación parece estar fuera de Chile. Verifica el punto en el mapa.", "error");
-        return;
-      }
-
-      setFormMessage("Guardando incidencia...", "info");
-
-      try {
-        await addDoc(collection(db, "incidencias"), {
-          categoria,
-          descripcion,
-          lat,
-          lng,
-          direccion,
-          estado,
-          creadoPor: currentUser.uid,
-          nombreUsuario: currentProfile.nombre || currentUser.email,
-          rolUsuario: currentProfile.rol,
-          fecha: serverTimestamp()
-        });
-
-        resetFormulario();
-        closePanel();
-        setFormMessage("Incidencia registrada correctamente.", "success");
-      } catch (error) {
-        console.error(error);
-        setFormMessage("Error al guardar la incidencia.", "error");
-      }
-    });
-  }
-}
-
-function togglePanel() {
-  if (!panelOperador) return;
-  panelOperador.classList.toggle("open");
-  refreshMap();
-}
-
-function openPanel() {
-  if (!panelOperador) return;
-  panelOperador.classList.add("open");
-  refreshMap();
-}
-
-function closePanel() {
-  if (!panelOperador) return;
-  panelOperador.classList.remove("open");
-  refreshMap();
-}
-
-function refreshMap() {
-  setTimeout(() => {
-    if (map) map.invalidateSize();
-  }, 280);
-}
-
-function bindBottomSheet() {
-  if (panelInicializado || !panelOperador) return;
-  panelInicializado = true;
-
-  let startY = 0;
-  let endY = 0;
-
-  const handle = panelOperador.querySelector(".sheet-handle");
-  if (!handle) return;
-
-  const onStart = (clientY) => {
-    startY = clientY;
-  };
-
-  const onEnd = (clientY) => {
-    endY = clientY;
-    const diff = endY - startY;
-
-    if (diff > 60) {
-      closePanel();
-    } else if (diff < -40) {
-      openPanel();
-    }
-  };
-
-  handle.addEventListener("touchstart", (e) => onStart(e.touches[0].clientY), { passive: true });
-  handle.addEventListener("touchend", (e) => onEnd(e.changedTouches[0].clientY), { passive: true });
-}
-
-function initMap() {
-  const esMovil = window.matchMedia("(max-width: 1024px)").matches;
-
-  map = L.map("mapOperador", {
-    gestureHandling: !esMovil,
-    scrollWheelZoom: esMovil,
-    zoomControl: false
-  }).setView([-33.45694, -70.64827], 13);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
-  }).addTo(map);
-
-  // Dejamos zoom visible también en móvil
-  L.control.zoom({ position: "topleft" }).addTo(map);
-
-  map.on("click", (e) => {
-    if (!ubicacionInicialCapturada) {
-      setFormMessage("Primero debes obtener la ubicación antes de ajustar el punto en el mapa.", "info");
+  btnGpsContinuar?.addEventListener("click", () => {
+    if (!registro.lat || !registro.lng) {
+      setMessage("Primero debe capturarse la ubicación.", "error");
       return;
     }
 
-    const { lat, lng } = e.latlng;
-    setLocation(lat, lng, "Ubicación ajustada manualmente en el mapa.");
+    irPaso(3);
   });
 
-  setTimeout(() => map.invalidateSize(), 400);
-}
+  btnDescripcionContinuar?.addEventListener("click", () => {
+    const descripcion = descripcionInput.value.trim();
+    const direccion = direccionInput.value.trim();
 
-function bindCategoriaButtons() {
-  const buttons = document.querySelectorAll(".tile-btn");
+    if (descripcion.length < 5) {
+      setMessage("Ingrese una descripción breve de la incidencia.", "error");
+      return;
+    }
 
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      buttons.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      if (categoriaInput) categoriaInput.value = btn.dataset.categoria;
-      openPanel();
-    });
+    registro.descripcion = descripcion;
+    registro.direccion = direccion;
+
+    cargarResumen();
+    irPaso(4);
   });
+
+  btnGuardar?.addEventListener("click", guardarIncidencia);
 }
 
-function setLocation(lat, lng, message = "") {
-  if (latitudInput) latitudInput.value = Number(lat).toFixed(6);
-  if (longitudInput) longitudInput.value = Number(lng).toFixed(6);
+function initMap() {
+  map = L.map("mapOperador", {
+    zoomControl: true,
+    attributionControl: true,
+    preferCanvas: true
+  }).setView([-33.45694, -70.64827], 13);
 
-  if (!marker) {
-    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    keepBuffer: 1,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
 
-    marker.on("dragend", (e) => {
-      const pos = e.target.getLatLng();
-      if (latitudInput) latitudInput.value = Number(pos.lat).toFixed(6);
-      if (longitudInput) longitudInput.value = Number(pos.lng).toFixed(6);
-      setFormMessage("Ubicación ajustada manualmente en el mapa.", "info");
-    });
-  } else {
-    marker.setLatLng([lat, lng]);
-  }
-
-  map.setView([lat, lng], 17);
-
-  if (message) {
-    setFormMessage(message, "success");
-  }
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 300);
 }
 
-function obtenerUbicacion() {
+function iniciarRegistro() {
+  limpiarRegistro();
+
+  successScreen.classList.add("hidden");
+  wizard.classList.remove("hidden");
+
+  irPaso(1);
+
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 250);
+}
+
+function cerrarWizard() {
+  wizard.classList.add("hidden");
+  setMessage("");
+}
+
+function cerrarExito() {
+  successScreen.classList.add("hidden");
+}
+
+function irPaso(paso) {
+  pasoActual = paso;
+
+  stepCategoria.classList.remove("active");
+  stepGps.classList.remove("active");
+  stepDescripcion.classList.remove("active");
+  stepResumen.classList.remove("active");
+
+  const titulos = {
+    1: "Categoría",
+    2: "Ubicación GPS",
+    3: "Descripción",
+    4: "Resumen"
+  };
+
+  const steps = {
+    1: stepCategoria,
+    2: stepGps,
+    3: stepDescripcion,
+    4: stepResumen
+  };
+
+  steps[paso].classList.add("active");
+
+  wizardStepText.textContent = `Paso ${paso} de 4`;
+  wizardTitle.textContent = titulos[paso];
+  progressBar.style.width = `${paso * 25}%`;
+
+  setMessage("");
+}
+
+function obtenerGpsAutomatico() {
   if (!navigator.geolocation) {
-    setFormMessage("Tu navegador no soporta geolocalización.", "error");
+    gpsFallido("Este teléfono no soporta geolocalización.");
     return;
   }
 
-  setFormMessage("Obteniendo ubicación...", "info");
+  gpsIcon.textContent = "📍";
+  gpsTitle.textContent = "Obteniendo ubicación...";
+  gpsText.textContent = "Mantenga el teléfono con señal GPS.";
+  gpsAccuracy.textContent = "";
+
+  btnReintentarGps.classList.add("hidden");
+  btnGpsContinuar.classList.add("hidden");
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      ubicacionInicialCapturada = true;
+      const precision = Math.round(position.coords.accuracy || 0);
 
-      setLocation(
-        lat,
-        lng,
-        "Ubicación obtenida correctamente. Ahora puedes ajustar el punto en el mapa si es necesario."
-      );
+      if (!coordenadasChile(lat, lng)) {
+        gpsFallido("La ubicación parece estar fuera de Chile. Verifique el GPS.");
+        return;
+      }
 
-      openPanel();
+      registro.lat = lat;
+      registro.lng = lng;
+      registro.precision = precision;
+
+      pintarMarker(lat, lng);
+
+      gpsIcon.textContent = "✅";
+      gpsTitle.textContent = "Ubicación capturada";
+      gpsText.textContent = "GPS listo para registrar la incidencia.";
+      gpsAccuracy.textContent = precision ? `Precisión aproximada: ${precision} m` : "";
+
+      btnGpsContinuar.classList.remove("hidden");
     },
     (error) => {
       console.error(error);
-      setFormMessage("No se pudo obtener la ubicación.", "error");
+      gpsFallido("No se pudo obtener la ubicación. Revise permisos GPS.");
     },
     {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
+      timeout: 9000,
+      maximumAge: 15000
     }
   );
 }
 
-function resetFormulario() {
-  if (registroForm) registroForm.reset();
-  if (categoriaInput) categoriaInput.value = "";
-  if (direccionInput) direccionInput.value = "";
-  if (latitudInput) latitudInput.value = "";
-  if (longitudInput) longitudInput.value = "";
+function gpsFallido(mensaje) {
+  gpsIcon.textContent = "⚠️";
+  gpsTitle.textContent = "GPS no disponible";
+  gpsText.textContent = mensaje;
+  gpsAccuracy.textContent = "";
 
-  ubicacionInicialCapturada = false;
+  btnReintentarGps.classList.remove("hidden");
+  btnGpsContinuar.classList.add("hidden");
+}
 
-  document.querySelectorAll(".tile-btn").forEach((b) => b.classList.remove("active"));
+function pintarMarker(lat, lng) {
+  if (!map) return;
 
-  if (marker) {
+  if (!marker) {
+    marker = L.marker([lat, lng]).addTo(map);
+  } else {
+    marker.setLatLng([lat, lng]);
+  }
+
+  map.setView([lat, lng], 17);
+}
+
+function cargarResumen() {
+  resCategoria.textContent = registro.categoria || "-";
+
+  if (registro.precision) {
+    resUbicacion.textContent = `GPS capturado · precisión ${registro.precision} m`;
+  } else {
+    resUbicacion.textContent = "GPS capturado";
+  }
+
+  resDescripcion.textContent = registro.descripcion || "-";
+}
+
+async function guardarIncidencia() {
+  if (!registro.categoria || !registro.descripcion || !registro.lat || !registro.lng) {
+    setMessage("Faltan datos para guardar la incidencia.", "error");
+    return;
+  }
+
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = "Guardando...";
+  setMessage("Enviando registro...", "info");
+
+  try {
+    await addDoc(collection(db, "incidencias"), {
+      categoria: registro.categoria,
+      descripcion: registro.descripcion,
+      direccion: registro.direccion || "",
+      lat: Number(registro.lat),
+      lng: Number(registro.lng),
+      precisionGps: registro.precision || null,
+      estado: "pendiente",
+      creadoPor: currentUser.uid,
+      nombreUsuario: currentProfile.nombre || currentUser.email,
+      rolUsuario: currentProfile.rol,
+      fecha: serverTimestamp()
+    });
+
+    wizard.classList.add("hidden");
+    successScreen.classList.remove("hidden");
+
+    limpiarRegistro();
+  } catch (error) {
+    console.error(error);
+    setMessage("No se pudo guardar la incidencia.", "error");
+  } finally {
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = "Guardar incidencia";
+  }
+}
+
+function limpiarRegistro() {
+  registro.categoria = "";
+  registro.descripcion = "";
+  registro.direccion = "";
+  registro.lat = null;
+  registro.lng = null;
+  registro.precision = null;
+
+  descripcionInput.value = "";
+  direccionInput.value = "";
+
+  document.querySelectorAll(".categoria-btn").forEach((btn) => btn.classList.remove("active"));
+
+  if (marker && map) {
     map.removeLayer(marker);
     marker = null;
   }
 
-  map.setView([-33.45694, -70.64827], 13);
+  if (map) {
+    map.setView([-33.45694, -70.64827], 13);
+  }
+
+  btnGuardar.disabled = false;
+  btnGuardar.textContent = "Guardar incidencia";
+
+  setMessage("");
 }
 
-function setFormMessage(message, type = "info") {
+function coordenadasChile(lat, lng) {
+  return lat <= -17 && lat >= -57 && lng <= -66 && lng >= -76;
+}
+
+function setMessage(message, type = "info") {
   if (!registroMessage) return;
-  registroMessage.textContent = message;
+
+  registroMessage.textContent = message || "";
   registroMessage.dataset.state = type;
-}
-
-function bindPwaInstallEvents() {
-  if (!installPwaBanner || !installPwaBtn || !installPwaDismiss || !installPwaText) return;
-
-  const isStandalone =
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true;
-
-  if (isStandalone) {
-    installPwaBanner.classList.remove("show");
-    return;
-  }
-
-  installPwaDismiss.addEventListener("click", () => {
-    installPwaBanner.classList.remove("show");
-  });
-
-  installPwaBtn.addEventListener("click", instalarPwa);
-
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredInstallPrompt = event;
-    installPwaBtn.style.display = "";
-    installPwaText.textContent = "Agrega esta app al inicio para abrir directo el panel operador.";
-    installPwaBanner.classList.add("show");
-  });
-
-  window.addEventListener("appinstalled", () => {
-    deferredInstallPrompt = null;
-    installPwaBanner.classList.remove("show");
-    setFormMessage("GeoRegistro quedó instalado en este equipo.", "success");
-  });
-
-  // Si el navegador no entrega el evento, igual mostramos la ayuda
-  installPwaBtn.style.display = "none";
-  installPwaText.textContent = "Si no aparece el botón, usa el menú del navegador y selecciona “Agregar a pantalla de inicio”.";
-  installPwaBanner.classList.add("show");
-}
-
-async function instalarPwa() {
-  if (!deferredInstallPrompt) return;
-
-  deferredInstallPrompt.prompt();
-  const result = await deferredInstallPrompt.userChoice;
-
-  if (result.outcome === "accepted") {
-    installPwaBanner.classList.remove("show");
-  }
-
-  deferredInstallPrompt = null;
 }
