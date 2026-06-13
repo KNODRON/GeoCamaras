@@ -26,11 +26,16 @@
 html,
 body {
   margin: 0;
+  width: 100%;
   min-height: 100%;
   font-family: var(--font);
 }
 
 body.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+
   background:
     linear-gradient(
       rgba(4, 12, 16, 0.25),
@@ -39,15 +44,11 @@ body.login-page {
     url("./fondo-georegistro.jpg");
 
   background-size: cover;
-  background-position: center;
+  background-position: center center;
   background-repeat: no-repeat;
   background-attachment: fixed;
 
   color: var(--text);
-}
-
-body.login-page {
-  min-height: 100vh;
 }
 
 button,
@@ -56,9 +57,14 @@ input {
 }
 
 .app-login {
+  width: 100%;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  min-height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   padding: 24px;
 }
 
