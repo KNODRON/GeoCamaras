@@ -75,7 +75,7 @@ input {
       rgba(255,255,255,.06),
       rgba(255,255,255,.01)
     ),
-    rgba(8,18,24,.18);
+    rgba(8,18,24,.10);
 
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
