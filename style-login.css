@@ -61,17 +61,26 @@ input {
 }
 
 .login-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 34px 28px 26px;
 
-  background: rgba(8,18,24,.28);
-
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(255,255,255,.20);
 
-  box-shadow:
-    0 20px 50px rgba(0,0,0,.30);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.08),
+      rgba(255,255,255,.02)
+    ),
+    rgba(8,18,24,.28);
 
+  box-shadow:
+    0 24px 52px rgba(0,0,0,.32);
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
 }
 
 .logo-login {
