@@ -31,8 +31,8 @@ body {
 
   background:
     linear-gradient(
-      rgba(4, 12, 16, 0.10),
-      rgba(4, 12, 16, 0.20)
+      rgba(4, 12, 16, 0.55),
+      rgba(4, 12, 16, 0.65)
     ),
     url("./fondo-georegistro.jpg");
 
